@@ -7,7 +7,11 @@ import (
 )
 
 type Router struct {
-	routes []Group
+	groups []Group
+}
+
+func (r *Router) Groups() []Group {
+	return r.groups
 }
 
 type Group struct {
@@ -15,12 +19,21 @@ type Group struct {
 	handlers     gin.HandlerFunc
 }
 
+func (g Group) RelativePath() string {
+	return g.relativePath
+}
+
+func (g Group) Handlers() gin.HandlerFunc {
+	return g.handlers
+}
+
 func (r *Router) Run() {
 	myRouter := gin.Default()
 
-	for rg := range r.routes {
-		myRouter.Group(rg.relativePath, rg.handlers)
+	for _, group := range r.Groups() {
+		myRouter.Group(group.RelativePath(), group.Handlers())
 	}
+
 	log.Fatal(http.ListenAndServe(":8000", myRouter))
 
 }
