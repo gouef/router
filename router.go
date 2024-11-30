@@ -1,39 +1,13 @@
 package router
 
 import (
-	"github.com/gin-gonic/gin"
-	"log"
-	"net/http"
+	"github.com/Gouef/router/http"
+	"net/url"
 )
 
-type Router struct {
-	groups []Group
+type Router interface {
+	match(httpRequest http.IRequest) *url.Values
+	constructUrl(params []any, refUrl http.Url) *string
 }
 
-func (r *Router) Groups() []Group {
-	return r.groups
-}
-
-type Group struct {
-	relativePath string
-	handlers     gin.HandlerFunc
-}
-
-func (g Group) RelativePath() string {
-	return g.relativePath
-}
-
-func (g Group) Handlers() gin.HandlerFunc {
-	return g.handlers
-}
-
-func (r *Router) Run() {
-	myRouter := gin.Default()
-
-	for _, group := range r.Groups() {
-		myRouter.Group(group.RelativePath(), group.Handlers())
-	}
-
-	log.Fatal(http.ListenAndServe(":8000", myRouter))
-
-}
+const ONE_WAY = true
