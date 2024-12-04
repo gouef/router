@@ -1,14 +1,14 @@
-module github.com/Gouef/router
+module github.com/gouef/router
 
 go 1.23.2
 
 require (
-	github.com/Gouef/utils v1.7.1
+	github.com/gouef/utils v1.7.2
 	github.com/gin-gonic/gin v1.10.0
 )
 
 replace (
-	github.com/Gouef/router/http => ./http
+	github.com/gouef/router/http => ./http
 )
 
 require (

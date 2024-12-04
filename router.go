@@ -2,12 +2,19 @@ package router
 
 import (
 	"github.com/Gouef/router/http"
+	"github.com/gin-gonic/gin"
 	"net/url"
 )
 
 type Router interface {
 	match(httpRequest http.IRequest) *url.Values
-	constructUrl(params []any, refUrl http.Url) *string
+	constructUrl(params map[string]interface{}, refUrl http.Url) *string
 }
 
 const ONE_WAY = true
+
+func run() {
+	router := gin.Default()
+
+	router.Handle()
+}

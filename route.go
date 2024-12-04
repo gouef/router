@@ -1,22 +1,22 @@
 package router
 
 type Route struct {
-	mask     string
-	sequence []interface{}
+	path   string
+	method Method
+	handle func()
+}
 
-	/** regular expression pattern */
-	re string
+func NewRoute(path string, handle func()) *Route {
+	return &Route{
+		path:   path,
+		handle: handle,
+	}
+}
 
-	/** @var string[]  parameter aliases in regular expression */
-	aliases []string
+func (r *Route) GetPath() string {
+	return r.path
+}
 
-	/** @var array of [value & fixity, filterIn, filterOut] */
-	metadata []interface{}
-	xlat     []interface{}
-
-	/** Host, Path, Relative */
-	routeType int
-
-	/** http | https */
-	scheme string
+func (r *Route) GetHandle() func() {
+	return r.handle
 }
