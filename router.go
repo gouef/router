@@ -1,8 +1,8 @@
 package router
 
 import (
-	"github.com/gouef/router/http"
 	"github.com/gin-gonic/gin"
+	"github.com/gouef/router/http"
 	"net/url"
 )
 
