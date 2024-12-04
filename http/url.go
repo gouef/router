@@ -3,7 +3,7 @@ package http
 import (
 	"errors"
 	"fmt"
-	"github.com/Gouef/utils"
+	"github.com/gouef/utils"
 	"net/url"
 	"regexp"
 	"strconv"

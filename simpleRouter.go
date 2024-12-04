@@ -2,7 +2,7 @@ package router
 
 import (
 	"fmt"
-	"github.com/Gouef/router/http"
+	"github.com/gouef/router/http"
 	"net/url"
 )
 
