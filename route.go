@@ -1,9 +1,5 @@
 package router
 
-import (
-	"github.com/gin-gonic/gin"
-)
-
 type Route struct {
 	pattern  string
 	handler  interface{}
@@ -38,8 +34,3 @@ func (r *Route) GetPattern() string {
 func (r *Route) GetHandler() interface{} {
 	return r.handler
 }
-
-type Param struct {
-}
-
-type RouteFunc func(*gin.Context, *Param)

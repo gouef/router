@@ -111,6 +111,14 @@ func TestNewRouteList(t *testing.T) {
 
 	router := NewRouter()
 	router.AddRouteList(lr)
+	CreateRoute(router, "/test/:id", func(c *gin.Context, p *struct {
+		ID int `uri:"id" binding:"required"`
+	}) {
+		c.JSON(http.StatusOK, gin.H{
+			"id": p.ID,
+		})
+		assert.Equal(t, 42, p.ID)
+	}, Get)
 
 	// Testování požadavku
 	req := httptest.NewRequest(http.MethodGet, "/cs/products/42", nil)

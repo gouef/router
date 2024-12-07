@@ -9,8 +9,6 @@ import (
 
 type Handler[T any] func(c *gin.Context, p *T)
 
-//type Handler func(c *gin.Context, p interface{})
-
 func BindStruct[T any](c *gin.Context) (T, error) {
 	var dto T
 	val := reflect.ValueOf(&dto).Elem()
