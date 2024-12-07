@@ -10,14 +10,9 @@ func (r *Router) GetRoutes() []interface{} {
 	return r.routes
 }
 
-func (r *Router) GetRoutes2() gin.RoutesInfo {
-	return r.routes2
-}
-
 type Router struct {
-	router  *gin.Engine
-	routes  []interface{}
-	routes2 gin.RoutesInfo
+	router *gin.Engine
+	routes []interface{}
 }
 
 func NewRouter() *Router {
@@ -25,34 +20,39 @@ func NewRouter() *Router {
 	return &Router{router: router}
 }
 
-// Funkce pro přidání generické routy s generickým handlerem
-func AddGenericRoute[T any](r *Router, pattern string, handler Handler[T], method Method) {
-	handlerType := reflect.TypeOf(handler)
-	if handlerType.Kind() != reflect.Func || handlerType.NumIn() != 2 || handlerType.In(0) != reflect.TypeOf(&gin.Context{}) {
-		panic(fmt.Sprintf("Handler must be a function with signature func(*gin.Context, *T). Got: %s", handlerType))
+func (r *Router) AddRouteList(l *RouteList) *Router {
+	var group *gin.RouterGroup
+	if l.pattern != "" {
+		group = r.router.Group(l.pattern)
 	}
 
-	// Přidáme handler do routeru
-	r.routes = append(r.routes, handler)
-
-	// Umožníme použít handler na základě typu
-	r.router.Handle(method.String(), pattern, func(c *gin.Context) {
-		dto, err := BindStruct[T](c) // Bindování dat do struktury
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
+	// Přidej všechny routy do skupiny nebo root routeru
+	for _, route := range l.routes {
+		if group != nil {
+			createNativeRoute(*group, route)
+			r.routes = append(r.routes, route.handler)
+		} else {
+			r.AddRoute(route.pattern, route.handler, route.method)
+			r.routes = append(r.routes, route.handler)
 		}
-		// Zavoláme handler s konkrétním typem
-		handler(c, &dto)
-	})
+	}
+
+	// Rekurzivně přidej děti
+	if l.children != nil { // Ověříme, že ukazatel na děti není nil
+		for _, child := range l.children {
+			r.AddRouteList(child)
+		}
+	}
+
+	return r
 }
 
-// V této metodě nebudeme dělat type assertion, použijeme generiku
-func (r *Router) AddRoute(pattern string, handler interface{}, method Method) *Router {
-	r.routes = append(r.routes, handler)
+func createNativeRoute(g gin.RouterGroup, route Route) gin.IRoutes {
+	return g.Handle(route.method.String(), route.pattern, createHandlerFunc(route.handler))
+}
 
-	// Předání handleru do Gin routeru s bindováním
-	r.router.Handle(method.String(), pattern, func(c *gin.Context) {
+func createHandlerFunc(handler interface{}) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		// Získáme typ parametru druhého argumentu handleru
 		handlerType := reflect.TypeOf(handler)
 		if handlerType.Kind() != reflect.Func || handlerType.NumIn() != 2 {
@@ -60,13 +60,16 @@ func (r *Router) AddRoute(pattern string, handler interface{}, method Method) *R
 			reflect.ValueOf(handler).Call([]reflect.Value{
 				reflect.ValueOf(c),
 			})
-			//panic("Handler must be a function with signature func(*gin.Context, *T)")
 			return
 		}
 
 		// Vytvoříme nový prázdný objekt pro data
-		paramType := handlerType.In(1).Elem() // Druhý parametr handleru (T)
-		paramValue := reflect.New(paramType).Interface()
+		paramType := handlerType.In(1) // Druhý parametr handleru (T)
+		if paramType.Kind() != reflect.Ptr {
+			panic(fmt.Sprintf("Handler parameter must be a pointer to a struct, got %v", paramType.Kind()))
+		}
+		paramElemType := paramType.Elem()
+		paramValue := reflect.New(paramElemType).Interface()
 
 		// Bindujeme data z požadavku do struktury
 		err := c.ShouldBindUri(paramValue)
@@ -80,8 +83,15 @@ func (r *Router) AddRoute(pattern string, handler interface{}, method Method) *R
 			reflect.ValueOf(c),
 			reflect.ValueOf(paramValue),
 		})
-	})
-	r.routes2 = r.router.Routes()
+	}
+}
+
+// V této metodě nebudeme dělat type assertion, použijeme generiku
+func (r *Router) AddRoute(pattern string, handler interface{}, method Method) *Router {
+	r.routes = append(r.routes, handler)
+
+	// Předání handleru do Gin routeru s bindováním
+	r.router.Handle(method.String(), pattern, createHandlerFunc(handler))
 
 	return r
 }
@@ -94,13 +104,45 @@ func (r *Router) AddMultiMethodsRoute(pattern string, handler interface{}, metho
 	return r
 }
 
+func (r *Router) AddRouteMethod(pattern string, handler interface{}, method Method) *Router {
+	return r.AddRoute(pattern, handler.(Handler[any]), method)
+}
+
 // Příklad metod pro různé HTTP metody
 func (r *Router) AddRouteGet(pattern string, handler interface{}) *Router {
-	return r.AddRoute(pattern, handler.(Handler[any]), Get)
+	return r.AddRouteMethod(pattern, handler, Get)
 }
 
 func (r *Router) AddRoutePost(pattern string, handler interface{}) *Router {
-	return r.AddRoute(pattern, handler.(Handler[any]), Post)
+	return r.AddRouteMethod(pattern, handler, Post)
+}
+
+func (r *Router) AddRoutePatch(pattern string, handler interface{}) *Router {
+	return r.AddRouteMethod(pattern, handler, Patch)
+}
+
+func (r *Router) AddRouteDelete(pattern string, handler interface{}) *Router {
+	return r.AddRouteMethod(pattern, handler, Delete)
+}
+
+func (r *Router) AddRoutePut(pattern string, handler interface{}) *Router {
+	return r.AddRouteMethod(pattern, handler, Put)
+}
+
+func (r *Router) AddRouteHead(pattern string, handler interface{}) *Router {
+	return r.AddRouteMethod(pattern, handler, Head)
+}
+
+func (r *Router) AddRouteOptions(pattern string, handler interface{}) *Router {
+	return r.AddRouteMethod(pattern, handler, Options)
+}
+
+func (r *Router) AddRouteConnect(pattern string, handler interface{}) *Router {
+	return r.AddRouteMethod(pattern, handler, Connect)
+}
+
+func (r *Router) AddRouteTrace(pattern string, handler interface{}) *Router {
+	return r.AddRouteMethod(pattern, handler, Trace)
 }
 
 // A tak dál pro další metody
@@ -114,115 +156,3 @@ func (r *Router) Run(addr string) {
 		return
 	}
 }
-
-/*
-// AddRoute přidá routu pro libovolný handler, který má (c *gin.Context, p *T)
-func (r *Router) AddRoute(path string, handler interface{}, method Method) {
-	// Ověříme, že handler je funkce s parametry (*gin.Context, *T)
-	handlerType := reflect.TypeOf(handler)
-	if handlerType.Kind() != reflect.Func {
-		panic("handler must be a function")
-	}
-	if handlerType.NumIn() != 2 {
-		panic("handler must have exactly two input parameters")
-	}
-	if handlerType.In(0) != reflect.TypeOf(&gin.Context{}) {
-		panic("first parameter must be *gin.Context")
-	}
-
-	h := func(c *gin.Context) {
-		// Dynamicky vytvoříme prázdnou instanci parametru
-		paramType := handlerType.In(1)
-		paramInstance := reflect.New(paramType).Interface()
-
-		// Bindujeme parametry URI
-		if err := c.ShouldBindUri(paramInstance); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-
-		// Zavoláme handler s parametry
-		reflect.ValueOf(handler).Call([]reflect.Value{reflect.ValueOf(c), reflect.ValueOf(paramInstance)})
-	}
-	// Dynamicky přidáme route pro GET
-	r.router.GET(path, h)
-
-	// Zaznamenáme tuto routu pro testování
-	r.routes = append(r.routes, gin.RouteInfo{
-		Method:      method.String(),
-		Path:        path,
-		HandlerFunc: h,
-	})
-}
-*/
-/*
-func (r *Router) AddRoute(path string, handler func(c *gin.Context, p interface{}), method Method, dto any) *Router {
-	handlerValue := reflect.ValueOf(handler)
-	handlerType := handlerValue.Type()
-
-	// Zajištění, že handler je funkce se dvěma argumenty: *gin.Context a nějaká struktura
-	if handlerType.Kind() != reflect.Func || handlerType.NumIn() != 2 || handlerType.In(0) != reflect.TypeOf(&gin.Context{}) {
-		panic(fmt.Sprintf("Handler must be a function with signature func(*gin.Context, T). Got: %s", handlerType))
-	}
-	//dtoType := handlerType.In(1)
-	AddGenericRoute(r, r.router, pattern, handler.(Handler[any]), method)
-	//AddGenericRoute(r, r.router, path, handler, method)
-
-	return r
-}
-
-func (r *Router) AddMultiMethodsRoute(pattern string, handler Handler[T], methods []Method) *Router {
-	for _, m := range methods {
-		r.AddRoute(pattern, handler, m)
-	}
-	return r
-}
-
-func (r *Router) AddRouteGet(pattern string, handler Handler[T]) *Router {
-	return r.AddRoute(pattern, handler, Get)
-}
-
-func (r *Router) AddRoutePost(pattern string, handler Handler[T]) *Router {
-	return r.AddRoute(pattern, handler, Post)
-}
-
-func (r *Router) AddRoutePatch(pattern string, handler Handler[T]) *Router {
-	return r.AddRoute(pattern, handler, Patch)
-}
-
-func (r *Router) AddRouteDelete(pattern string, handler Handler[T]) *Router {
-	return r.AddRoute(pattern, handler, Delete)
-}
-
-func (r *Router) AddRoutePut(pattern string, handler Handler[T]) *Router {
-	return r.AddRoute(pattern, handler, Put)
-}
-
-func (r *Router) AddRouteHead(pattern string, handler Handler[T]) *Router {
-	return r.AddRoute(pattern, handler, Head)
-}
-
-func (r *Router) AddRouteOptions(pattern string, handler Handler[T]) *Router {
-	return r.AddRoute(pattern, handler, Options)
-}
-
-func (r *Router) AddRouteConnect(pattern string, handler Handler[T]) *Router {
-	return r.AddRoute(pattern, handler, Connect)
-}
-
-func (r *Router) AddRouteTrace(pattern string, handler Handler[T]) *Router {
-	return r.AddRoute(pattern, handler, Trace)
-}
-
-func (r *Router) GetNativeRouter() *gin.Engine {
-	return r.router
-}
-
-func (r *Router) Run(addr string) {
-	//r.router.Use(RouteValidator(r.routes))
-	err := r.router.Run(addr)
-	if err != nil {
-		return
-	}
-}
-*/
