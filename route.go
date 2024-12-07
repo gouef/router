@@ -1,22 +1,32 @@
 package router
 
-type Route struct {
-	path   string
-	method Method
-	handle func()
+import (
+	"fmt"
+	"github.com/gin-gonic/gin"
+	"reflect"
+)
+
+type Route[T any] struct {
+	Path    string
+	Handler Handler[T]
+	Dto     T
 }
 
-func NewRoute(path string, handle func()) *Route {
-	return &Route{
-		path:   path,
-		handle: handle,
+func CreateRoute[T any](pattern string, handler Handler[T]) *Route[T] {
+	handlerValue := reflect.ValueOf(handler)
+	handlerType := handlerValue.Type()
+
+	// Zajištění, že handler je funkce se dvěma argumenty: *gin.Context a nějaká struktura
+	if handlerType.Kind() != reflect.Func || handlerType.NumIn() != 2 || handlerType.In(0) != reflect.TypeOf(&gin.Context{}) {
+		panic(fmt.Sprintf("Handler must be a function with signature func(*gin.Context, T). Got: %s", handlerType))
 	}
-}
 
-func (r *Route) GetPath() string {
-	return r.path
-}
+	//c := handlerType.In(0)
 
-func (r *Route) GetHandle() func() {
-	return r.handle
+	//dto, err := BindStruct[T](&c)
+
+	return &Route[T]{
+		Path:    pattern,
+		Handler: handler,
+	}
 }
