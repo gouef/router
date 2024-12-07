@@ -3,23 +3,77 @@ package router
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"net/http"
 	"reflect"
 )
 
+type ErrorHandlerFunc func(c *gin.Context)
+
 type Router struct {
-	router *gin.Engine
-	routes []interface{}
+	router         *gin.Engine
+	routes         []interface{}
+	errorHandlers  map[int]ErrorHandlerFunc
+	defaultHandler ErrorHandlerFunc
 }
 
 // NewRouter create new Router
 func NewRouter() *Router {
 	router := gin.Default()
-	return &Router{router: router}
+	return &Router{
+		router:        router,
+		errorHandlers: make(map[int]ErrorHandlerFunc),
+		defaultHandler: func(c *gin.Context) {
+			status := c.Writer.Status()
+			c.JSON(status, gin.H{
+				"error":       "An error occurred",
+				"description": "No specific handler defined for this status",
+			})
+		},
+	}
 }
 
 // GetRoutes return list of routes
 func (r *Router) GetRoutes() []interface{} {
 	return r.routes
+}
+
+// SetErrorHandler set Error handler for status code
+// Example:
+//
+//	router.SetErrorHandler(400, func(c *gin.Context) {
+//			status := c.Writer.Status()
+//			c.JSON(status, gin.H{
+//				"error":       "An error occurred",
+//				"description": "No specific handler defined for this status",
+//			})
+//		})
+func (r *Router) SetErrorHandler(status int, handler ErrorHandlerFunc) *Router {
+
+	if status == 404 {
+		r.router.NoRoute(func(cc *gin.Context) {
+			handler(cc)
+		})
+	}
+	r.errorHandlers[status] = handler
+
+	return r
+}
+
+// ErrorHandlerMiddleware middleware for customization error stats responses
+func (r *Router) ErrorHandlerMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Next()
+
+		status := c.Writer.Status()
+
+		if status >= 400 {
+			if handler, exists := r.errorHandlers[status]; exists {
+				handler(c)
+			} else {
+				r.defaultHandler(c)
+			}
+		}
+	}
 }
 
 // AddRouteList add RouteList to router
@@ -164,7 +218,7 @@ func (r *Router) AddMultiMethodsRoute(pattern string, handler interface{}, metho
 //		})
 //	}, Get)
 func (r *Router) AddRouteMethod(pattern string, handler interface{}, method Method) *Router {
-	return r.AddRoute(pattern, handler.(Handler[any]), method)
+	return r.AddRoute(pattern, handler, method)
 }
 
 // CreateRoute add generic route to router.
@@ -302,7 +356,20 @@ func (r *Router) GetNativeRouter() *gin.Engine {
 // It is a shortcut for http.ListenAndServe(addr, router)
 // Note: this method will block the calling goroutine indefinitely unless an error happens.
 func (r *Router) Run(addr string) {
-	err := r.router.Run(addr)
+	router := r.router
+	if h, ok := r.errorHandlers[404]; ok {
+		router.NoRoute(func(c *gin.Context) {
+			h(c)
+		})
+	} else {
+		router.NoRoute(func(c *gin.Context) {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Custom 404",
+			})
+		})
+	}
+	router.Use(r.ErrorHandlerMiddleware())
+	err := router.Run(addr)
 	if err != nil {
 		return
 	}
