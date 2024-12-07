@@ -32,6 +32,15 @@ func NewRouter() *Router {
 	}
 }
 
+func (r *Router) SetDefaultErrorHandler(handler ErrorHandlerFunc) *Router {
+	r.defaultHandler = handler
+	r.router.NoRoute(func(cc *gin.Context) {
+		handler(cc)
+	})
+
+	return r
+}
+
 // GetRoutes return list of routes
 func (r *Router) GetRoutes() []interface{} {
 	return r.routes
