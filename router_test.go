@@ -38,3 +38,36 @@ func TestRouter_AddRoute(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.JSONEq(t, `{"locale":"cs","id":42}`, w.Body.String())
 }
+
+func TestRouter_AddRouteWithoutParams(t *testing.T) {
+	router := NewRouter()
+
+	// DTO a handler
+	type ProductDetailParams struct {
+		Locale string `uri:"locale" binding:"required"`
+		ID     int    `uri:"id" binding:"required"`
+	}
+	productDetailHandler := func(c *gin.Context) {
+		l := c.Param("locale")
+		id := c.Param("id")
+		c.JSON(http.StatusOK, gin.H{
+			"locale": l,
+			"id":     id,
+		})
+
+		assert.Equal(t, "cs", l)
+		assert.Equal(t, "42", id)
+	}
+
+	// Přidání routy
+	router.AddRoute("/:locale/products/:id", productDetailHandler, Get)
+
+	// Testování požadavku
+	req := httptest.NewRequest(http.MethodGet, "/cs/products/42", nil)
+	w := httptest.NewRecorder()
+	router.GetNativeRouter().ServeHTTP(w, req)
+
+	// Ověření výsledku
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.JSONEq(t, `{"locale":"cs","id":"42"}`, w.Body.String())
+}

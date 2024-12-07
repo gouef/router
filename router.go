@@ -56,7 +56,12 @@ func (r *Router) AddRoute(pattern string, handler interface{}, method Method) *R
 		// Získáme typ parametru druhého argumentu handleru
 		handlerType := reflect.TypeOf(handler)
 		if handlerType.Kind() != reflect.Func || handlerType.NumIn() != 2 {
-			panic("Handler must be a function with signature func(*gin.Context, *T)")
+
+			reflect.ValueOf(handler).Call([]reflect.Value{
+				reflect.ValueOf(c),
+			})
+			//panic("Handler must be a function with signature func(*gin.Context, *T)")
+			return
 		}
 
 		// Vytvoříme nový prázdný objekt pro data

@@ -7,9 +7,6 @@ import (
 	"strconv"
 )
 
-type Param struct {
-}
-
 type Handler[T any] func(c *gin.Context, p *T)
 
 //type Handler func(c *gin.Context, p interface{})

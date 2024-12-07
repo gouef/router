@@ -12,6 +12,11 @@ type Route[T any] struct {
 	Dto     T
 }
 
+type Param struct {
+}
+
+type RouteFunc func(*gin.Context, *Param)
+
 func CreateRoute[T any](pattern string, handler Handler[T]) *Route[T] {
 	handlerValue := reflect.ValueOf(handler)
 	handlerType := handlerValue.Type()
