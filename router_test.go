@@ -29,16 +29,16 @@ func TestRouterErrorHandlers(t *testing.T) {
 	})
 
 	// Definice rout pro testování
-	router.AddRouteGet("/ok", func(c *gin.Context) {
+	router.AddRouteGet("ok", "/ok", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "This is OK"})
 	})
-	router.AddRouteGet("/notfound", func(c *gin.Context) {
+	router.AddRouteGet("notfound", "/notfound", func(c *gin.Context) {
 		c.Status(http.StatusNotFound)
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "Custom 404",
 		})
 	})
-	router.AddRouteGet("/servererror", func(c *gin.Context) {
+	router.AddRouteGet("servererror", "/servererror", func(c *gin.Context) {
 		c.Status(http.StatusInternalServerError)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Custom 500",
@@ -109,8 +109,9 @@ func TestRouter_AddRoute(t *testing.T) {
 	}
 
 	// Přidání routy
-	router.AddRoute("/:locale/products/:id", productDetailHandler, Get)
+	router.AddRoute("products:detail", "/:locale/products/:id", productDetailHandler, Get)
 	router.AddRoute(
+		"product:detail",
 		"/product/:id",
 		func(c *gin.Context, p *struct {
 			ID int `uri:"id" binding:"required"`
@@ -157,7 +158,7 @@ func TestRouter_AddRouteWithoutParams(t *testing.T) {
 	}
 
 	// Přidání routy
-	router.AddRoute("/:locale/products/:id", productDetailHandler, Get)
+	router.AddRoute("products:detail", "/:locale/products/:id", productDetailHandler, Get)
 
 	// Testování požadavku
 	req := httptest.NewRequest(http.MethodGet, "/cs/products/42", nil)
@@ -188,12 +189,12 @@ func TestNewRouteList(t *testing.T) {
 	v1 := CreateRouteList("/v1")
 	lr.addChild(v1)
 
-	lr.Add("/:locale/products/:id", productDetailHandler, Get)
-	v1.Add("/:locale/products/:id", productDetailHandler, Get)
+	lr.Add("products:detail", "/:locale/products/:id", productDetailHandler, Get)
+	v1.Add("products:detail", "/:locale/products/:id", productDetailHandler, Get)
 
 	router := NewRouter()
 	router.AddRouteList(lr)
-	CreateRoute(router, "/test/:id", func(c *gin.Context, p *struct {
+	CreateRoute(router, "test", "/test/:id", func(c *gin.Context, p *struct {
 		ID int `uri:"id" binding:"required"`
 	}) {
 		c.JSON(http.StatusOK, gin.H{
@@ -220,4 +221,59 @@ func TestNewRouteList(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w2.Code)
 	assert.JSONEq(t, `{"locale":"cs","id":42}`, w2.Body.String())
 
+}
+
+func TestRouterRoutesKeys(t *testing.T) {
+	// Vytvoření nového routeru
+	r := NewRouter()
+
+	// Přidání tras
+	r.AddRoute("home", "/home", func(c *gin.Context) {}, Get)
+	r.AddRoute("about", "/about", func(c *gin.Context) {}, Get)
+	r.AddRoute("contact", "/contact", func(c *gin.Context) {}, Get)
+	r.AddRoute("product:detail", "/product/:id", func(c *gin.Context) {}, Get)
+
+	// Očekávané klíče
+	expectedKeys := []string{"home", "about", "contact", "product:detail"}
+
+	// Kontrola klíčů
+	for _, key := range expectedKeys {
+		if _, exists := r.routes[key]; !exists {
+			t.Errorf("Expected key '%s' to exist in Router.routes, but it does not.", key)
+		}
+	}
+
+	// Kontrola počtu klíčů
+	if len(r.routes) != len(expectedKeys) {
+		t.Errorf("Expected %d routes, but got %d", len(expectedKeys), len(r.routes))
+	}
+}
+
+func TestRoute_AddChild(t *testing.T) {
+	// Vytvoření root route
+	root := NewRoute("root", "/", nil, Get, make(map[string]*Route))
+
+	// Přidání dětí
+	root.AddChild(
+		"child1",
+		"/child1",
+		nil,
+		Get,
+	).AddChild(
+		"child2",
+		"/child2",
+		nil,
+		Post,
+	)
+
+	// Ověření, že root má 2 děti
+	assert.Len(t, root.GetChildren(), 2, "Root should have 2 children")
+
+	// Ověření existence klíčů pro děti
+	assert.Contains(t, root.GetChildren(), "/child1", "Expected '/child1' in children")
+	assert.Contains(t, root.GetChildren(), "/child2", "Expected '/child2' in children")
+
+	// Ověření správné instance dítěte
+	assert.Equal(t, "root:child1", root.GetChildren()["/child1"].name, "Expected the same child1 instance")
+	assert.Equal(t, "root:child2", root.GetChildren()["/child2"].name, "Expected the same child2 instance")
 }

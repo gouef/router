@@ -1,14 +1,16 @@
 package router
 
 type Route struct {
+	name     string
 	pattern  string
 	handler  interface{}
 	method   Method
 	children map[string]*Route
 }
 
-func NewRoute(pattern string, handler interface{}, method Method, children map[string]*Route) *Route {
+func NewRoute(name string, pattern string, handler interface{}, method Method, children map[string]*Route) *Route {
 	return &Route{
+		name:     name,
 		pattern:  pattern,
 		handler:  handler,
 		method:   method,
@@ -16,8 +18,8 @@ func NewRoute(pattern string, handler interface{}, method Method, children map[s
 	}
 }
 
-func (r *Route) AddChild(pattern string, handler interface{}, method Method) *Route {
-	child := NewRoute(pattern, handler, method, nil)
+func (r *Route) AddChild(name string, pattern string, handler interface{}, method Method) *Route {
+	child := NewRoute(r.name+":"+name, pattern, handler, method, nil)
 	r.children[pattern] = child
 
 	return r

@@ -2,7 +2,7 @@ package router
 
 type RouteList struct {
 	pattern  string
-	routes   []Route
+	routes   []*Route
 	children []*RouteList
 }
 
@@ -20,18 +20,18 @@ func (l *RouteList) addChild(child *RouteList) *RouteList {
 	return l
 }
 
-func (l *RouteList) Add(pattern string, handler interface{}, method Method) *RouteList {
-	return l.AddWithChildren(pattern, handler, method, nil)
+func (l *RouteList) Add(name string, pattern string, handler interface{}, method Method) *RouteList {
+	return l.AddWithChildren(name, pattern, handler, method, nil)
 }
 
-func (l *RouteList) AddWithChildren(pattern string, handler interface{}, method Method, children map[string]*Route) *RouteList {
-	route := NewRoute(pattern, handler, method, children)
+func (l *RouteList) AddWithChildren(name string, pattern string, handler interface{}, method Method, children map[string]*Route) *RouteList {
+	route := NewRoute(name, pattern, handler, method, children)
 	l.AddRoute(route)
 
 	return l
 }
 
 func (l *RouteList) AddRoute(r *Route) *RouteList {
-	l.routes = append(l.routes, *r)
+	l.routes = append(l.routes, r)
 	return l
 }

@@ -11,16 +11,17 @@ type ErrorHandlerFunc func(c *gin.Context)
 
 type Router struct {
 	router         *gin.Engine
-	routes         []interface{}
+	routes         map[string]*Route
 	errorHandlers  map[int]ErrorHandlerFunc
 	defaultHandler ErrorHandlerFunc
 }
 
 // NewRouter create new Router
 func NewRouter() *Router {
-	router := gin.Default()
+	router := gin.New()
 	return &Router{
 		router:        router,
+		routes:        make(map[string]*Route),
 		errorHandlers: make(map[int]ErrorHandlerFunc),
 		defaultHandler: func(c *gin.Context) {
 			status := c.Writer.Status()
@@ -42,7 +43,7 @@ func (r *Router) SetDefaultErrorHandler(handler ErrorHandlerFunc) *Router {
 }
 
 // GetRoutes return list of routes
-func (r *Router) GetRoutes() []interface{} {
+func (r *Router) GetRoutes() map[string]*Route {
 	return r.routes
 }
 
@@ -107,10 +108,9 @@ func (r *Router) AddRouteList(l *RouteList) *Router {
 	for _, route := range l.routes {
 		if group != nil {
 			createNativeRoute(*group, route)
-			r.routes = append(r.routes, route.handler)
+			r.routes[route.name] = route
 		} else {
-			r.AddRoute(route.pattern, route.handler, route.method)
-			r.routes = append(r.routes, route.handler)
+			r.AddRoute(route.name, route.pattern, route.handler, route.method)
 		}
 	}
 
@@ -125,7 +125,7 @@ func (r *Router) AddRouteList(l *RouteList) *Router {
 }
 
 // createHandlerFunc internal, add route to group, and return gin.IRoutes
-func createNativeRoute(g gin.RouterGroup, route Route) gin.IRoutes {
+func createNativeRoute(g gin.RouterGroup, route *Route) gin.IRoutes {
 	return g.Handle(route.method.String(), route.pattern, createHandlerFunc(route.handler))
 }
 
@@ -166,13 +166,14 @@ func createHandlerFunc(handler interface{}) gin.HandlerFunc {
 }
 
 // AddRoute add route to router.
+// name: name id for url construct
 // pattern: path to route, example "/users/:id".
 // handler: func(c *gin.Context, p *struct)
 // method: Method
 //
 // Example:
 //
-//	router.AddRoute("/users/:id", func(c *gin.Context, p *struct{
+//	router.AddRoute("user:detail", "/users/:id", func(c *gin.Context, p *struct{
 //		ID int `uri:"id" binding:"required"`
 //	}) {
 //	    // code
@@ -180,8 +181,8 @@ func createHandlerFunc(handler interface{}) gin.HandlerFunc {
 //			"id": p.ID,
 //		})
 //	}, Get)
-func (r *Router) AddRoute(pattern string, handler interface{}, method Method) *Router {
-	r.routes = append(r.routes, handler)
+func (r *Router) AddRoute(name string, pattern string, handler interface{}, method Method) *Router {
+	r.routes[name] = NewRoute(name, pattern, handler, method, map[string]*Route{})
 
 	r.router.Handle(method.String(), pattern, createHandlerFunc(handler))
 
@@ -189,13 +190,14 @@ func (r *Router) AddRoute(pattern string, handler interface{}, method Method) *R
 }
 
 // AddMultiMethodsRoute add route with multiple methods to router.
+// name: name id for url construct
 // pattern: path to route, example "/users/:id".
 // handler: func(c *gin.Context, p *struct)
 // methods: []Method
 //
 // Example:
 //
-//	router.AddMultiMethodsRoute("/users/:id", func(c *gin.Context, p *struct{
+//	router.AddMultiMethodsRoute("user:detail", "/users/:id", func(c *gin.Context, p *struct{
 //			ID int `uri:"id" binding:"required"`
 //		}) {
 //		    // code
@@ -204,21 +206,22 @@ func (r *Router) AddRoute(pattern string, handler interface{}, method Method) *R
 //			})
 //		}, []Method{Get, Post},
 //		)
-func (r *Router) AddMultiMethodsRoute(pattern string, handler interface{}, methods []Method) *Router {
+func (r *Router) AddMultiMethodsRoute(name string, pattern string, handler interface{}, methods []Method) *Router {
 	for _, m := range methods {
-		r.AddRoute(pattern, handler, m)
+		r.AddRoute(name, pattern, handler, m)
 	}
 	return r
 }
 
 // AddRouteMethod add route to router.
+// name: name id for url construct
 // pattern: path to route, example "/users/:id".
 // handler: func(c *gin.Context, p *struct)
 // method: Method
 //
 // Example:
 //
-//	router.AddRouteMethod("/users/:id", func(c *gin.Context, p *struct{
+//	router.AddRouteMethod("user:detail", "/users/:id", func(c *gin.Context, p *struct{
 //		ID int `uri:"id" binding:"required"`
 //	}) {
 //	    // code
@@ -226,18 +229,19 @@ func (r *Router) AddMultiMethodsRoute(pattern string, handler interface{}, metho
 //			"id": p.ID,
 //		})
 //	}, Get)
-func (r *Router) AddRouteMethod(pattern string, handler interface{}, method Method) *Router {
-	return r.AddRoute(pattern, handler, method)
+func (r *Router) AddRouteMethod(name string, pattern string, handler interface{}, method Method) *Router {
+	return r.AddRoute(name, pattern, handler, method)
 }
 
 // CreateRoute add generic route to router.
+// name: name id for url construct
 // pattern: path to route, example "/users/:id".
 // handler: func(c *gin.Context, p *struct)
 // method: Method
 //
 // Example:
 //
-//	 CreateRoute(router, func(c *gin.Context, p *struct{
+//	 CreateRoute(router, "user:detail", "/users/:id", func(c *gin.Context, p *struct{
 //			ID int `uri:"id" binding:"required"`
 //		}) {
 //		    // code
@@ -245,17 +249,18 @@ func (r *Router) AddRouteMethod(pattern string, handler interface{}, method Meth
 //				"id": p.ID,
 //			})
 //		}, Get)
-func CreateRoute[T any](r *Router, pattern string, handler func(c *gin.Context, p *T), method Method) *Router {
-	return r.AddRoute(pattern, handler, method)
+func CreateRoute[T any](r *Router, name string, pattern string, handler func(c *gin.Context, p *T), method Method) *Router {
+	return r.AddRoute(name, pattern, handler, method)
 }
 
 // AddRouteGet add GET route to router.
+// name: name id for url construct
 // pattern: path to route, example "/users/:id".
 // handler: func(c *gin.Context, p *struct)
 //
 // Example:
 //
-//	router.AddRouteGet("/users/:id", func(c *gin.Context, p *struct{
+//	router.AddRouteGet("user:detail", "/users/:id", func(c *gin.Context, p *struct{
 //		ID int `uri:"id" binding:"required"`
 //	}) {
 //	    // code
@@ -263,17 +268,18 @@ func CreateRoute[T any](r *Router, pattern string, handler func(c *gin.Context, 
 //			"id": p.ID,
 //		})
 //	})
-func (r *Router) AddRouteGet(pattern string, handler interface{}) *Router {
-	return r.AddRouteMethod(pattern, handler, Get)
+func (r *Router) AddRouteGet(name string, pattern string, handler interface{}) *Router {
+	return r.AddRouteMethod(name, pattern, handler, Get)
 }
 
 // AddRoutePost add POST route to router.
+// name: name id for url construct
 // pattern: path to route, example "/users/:id".
 // handler: func(c *gin.Context, p *struct)
 //
 // Example:
 //
-//	router.AddRoutePost("/users/:id", func(c *gin.Context, p *struct{
+//	router.AddRoutePost("user:detail", "/users/:id", func(c *gin.Context, p *struct{
 //		ID int `uri:"id" binding:"required"`
 //	}) {
 //	    // code
@@ -281,17 +287,18 @@ func (r *Router) AddRouteGet(pattern string, handler interface{}) *Router {
 //			"id": p.ID,
 //		})
 //	})
-func (r *Router) AddRoutePost(pattern string, handler interface{}) *Router {
-	return r.AddRouteMethod(pattern, handler, Post)
+func (r *Router) AddRoutePost(name string, pattern string, handler interface{}) *Router {
+	return r.AddRouteMethod(name, pattern, handler, Post)
 }
 
 // AddRoutePatch add Path route to router.
+// name: name id for url construct
 // pattern: path to route, example "/users/:id".
 // handler: func(c *gin.Context, p *struct)
 //
 // Example:
 //
-//	router.AddRoutePatch("/users/:id", func(c *gin.Context, p *struct{
+//	router.AddRoutePatch("user:detail", "/users/:id", func(c *gin.Context, p *struct{
 //		ID int `uri:"id" binding:"required"`
 //	}) {
 //	    // code
@@ -299,17 +306,18 @@ func (r *Router) AddRoutePost(pattern string, handler interface{}) *Router {
 //			"id": p.ID,
 //		})
 //	})
-func (r *Router) AddRoutePatch(pattern string, handler interface{}) *Router {
-	return r.AddRouteMethod(pattern, handler, Patch)
+func (r *Router) AddRoutePatch(name string, pattern string, handler interface{}) *Router {
+	return r.AddRouteMethod(name, pattern, handler, Patch)
 }
 
 // AddRouteDelete add Delete route to router.
+// name: name id for url construct
 // pattern: path to route, example "/users/:id".
 // handler: func(c *gin.Context, p *struct)
 //
 // Example:
 //
-//	router.AddRouteDelete("/users/:id", func(c *gin.Context, p *struct{
+//	router.AddRouteDelete("user:detail", "/users/:id", func(c *gin.Context, p *struct{
 //		ID int `uri:"id" binding:"required"`
 //	}) {
 //	    // code
@@ -317,11 +325,12 @@ func (r *Router) AddRoutePatch(pattern string, handler interface{}) *Router {
 //			"id": p.ID,
 //		})
 //	})
-func (r *Router) AddRouteDelete(pattern string, handler interface{}) *Router {
-	return r.AddRouteMethod(pattern, handler, Delete)
+func (r *Router) AddRouteDelete(name string, pattern string, handler interface{}) *Router {
+	return r.AddRouteMethod(name, pattern, handler, Delete)
 }
 
 // AddRoutePut add Put route to router.
+// name: name id for url construct
 // pattern: path to route, example "/users/:id".
 // handler: func(c *gin.Context, p *struct)
 //
@@ -335,24 +344,24 @@ func (r *Router) AddRouteDelete(pattern string, handler interface{}) *Router {
 //			"id": p.ID,
 //		})
 //	})
-func (r *Router) AddRoutePut(pattern string, handler interface{}) *Router {
-	return r.AddRouteMethod(pattern, handler, Put)
+func (r *Router) AddRoutePut(name string, pattern string, handler interface{}) *Router {
+	return r.AddRouteMethod(name, pattern, handler, Put)
 }
 
-func (r *Router) AddRouteHead(pattern string, handler interface{}) *Router {
-	return r.AddRouteMethod(pattern, handler, Head)
+func (r *Router) AddRouteHead(name string, pattern string, handler interface{}) *Router {
+	return r.AddRouteMethod(name, pattern, handler, Head)
 }
 
-func (r *Router) AddRouteOptions(pattern string, handler interface{}) *Router {
-	return r.AddRouteMethod(pattern, handler, Options)
+func (r *Router) AddRouteOptions(name string, pattern string, handler interface{}) *Router {
+	return r.AddRouteMethod(name, pattern, handler, Options)
 }
 
-func (r *Router) AddRouteConnect(pattern string, handler interface{}) *Router {
-	return r.AddRouteMethod(pattern, handler, Connect)
+func (r *Router) AddRouteConnect(name string, pattern string, handler interface{}) *Router {
+	return r.AddRouteMethod(name, pattern, handler, Connect)
 }
 
-func (r *Router) AddRouteTrace(pattern string, handler interface{}) *Router {
-	return r.AddRouteMethod(pattern, handler, Trace)
+func (r *Router) AddRouteTrace(name string, pattern string, handler interface{}) *Router {
+	return r.AddRouteMethod(name, pattern, handler, Trace)
 }
 
 // GetNativeRouter return gin router engine
