@@ -1,10 +1,12 @@
 package router
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"reflect"
+	"strings"
 )
 
 type ErrorHandlerFunc func(c *gin.Context)
@@ -362,6 +364,42 @@ func (r *Router) AddRouteConnect(name string, pattern string, handler interface{
 
 func (r *Router) AddRouteTrace(name string, pattern string, handler interface{}) *Router {
 	return r.AddRouteMethod(name, pattern, handler, Trace)
+}
+
+func (r *Router) GenerateUrlByName(name string, params map[string]interface{}) (string, error) {
+	route, exists := r.routes[name]
+
+	if !exists {
+		return "", errors.New(fmt.Sprintf("route with name %s not found", name))
+	}
+
+	return r.GenerateUrlByPattern(route.pattern, params)
+}
+
+func (r *Router) GenerateUrlByPattern(pattern string, params map[string]interface{}) (string, error) {
+	// Předpokládáme, že pattern může obsahovat parametry jako :id
+	var urlBuilder strings.Builder
+
+	// Rozdělíme pattern podle / pro iteraci
+	parts := strings.Split(pattern, "/")
+	for _, part := range parts {
+		if strings.HasPrefix(part, ":") {
+			// Pokud je část patternu parametr (např. :id), hledáme jeho hodnotu v params
+			paramName := part[1:] // Odstraníme ':'
+			if value, exists := params[paramName]; exists {
+				// Přidáme hodnotu parametru do URL
+				urlBuilder.WriteString(fmt.Sprintf("/%v", value))
+			} else {
+				// Pokud parametr v params neexistuje, vrátíme chybu
+				return "", fmt.Errorf("missing value for parameter: %s", paramName)
+			}
+		} else {
+			// Pokud část patternu není parametr, přidáme ji přímo do URL
+			urlBuilder.WriteString("/" + part)
+		}
+	}
+
+	return urlBuilder.String(), nil
 }
 
 // GetNativeRouter return gin router engine
