@@ -18,11 +18,12 @@ func NewRoute(name string, pattern string, handler interface{}, method Method, c
 	}
 }
 
-func (r *Route) AddChild(name string, pattern string, handler interface{}, method Method) *Route {
-	child := NewRoute(r.name+":"+name, pattern, handler, method, nil)
-	r.children[pattern] = child
+func (r *Route) GetName() string {
+	return r.name
+}
 
-	return r
+func (r *Route) GetMethod() Method {
+	return r.method
 }
 
 func (r *Route) GetChildren() map[string]*Route {
@@ -35,4 +36,11 @@ func (r *Route) GetPattern() string {
 
 func (r *Route) GetHandler() interface{} {
 	return r.handler
+}
+
+func (r *Route) AddChild(name string, pattern string, handler interface{}, method Method) *Route {
+	child := NewRoute(r.name+":"+name, pattern, handler, method, nil)
+	r.children[pattern] = child
+
+	return r
 }

@@ -14,7 +14,7 @@ func CreateRouteList(pattern string) *RouteList {
 	return &RouteList{pattern: pattern}
 }
 
-func (l *RouteList) addChild(child *RouteList) *RouteList {
+func (l *RouteList) AddChild(child *RouteList) *RouteList {
 	l.children = append(l.children, child)
 
 	return l
