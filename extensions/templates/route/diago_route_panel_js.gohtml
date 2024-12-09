@@ -1,0 +1,51 @@
+{{define "diagoRoutePanelJS"}}
+<script>
+    // Funkce pro otevření popupu se seznamem rout
+    function showRoutesPopup() {
+        document.getElementById("routes-popup").style.display = "block";
+    }
+
+    // Funkce pro zavření popupu
+    function closeRoutesPopup() {
+        document.getElementById("routes-popup").style.display = "none";
+    }
+
+    // Funkce pro umožnění drag and drop pro routes-popup
+    let routesPopup = document.getElementById("routes-popup");
+    routesPopup.onmousedown = function (e) {
+        let shiftX = e.clientX - routesPopup.getBoundingClientRect().left;
+        let shiftY = e.clientY - routesPopup.getBoundingClientRect().top;
+
+        document.onmousemove = function (e) {
+            // Zajištění, že popup nebude přetahován mimo obrazovku
+            let newX = e.clientX - shiftX;
+            let newY = e.clientY - shiftY;
+
+            // Omezíme horizontální pohyb tak, aby se popup nevešel mimo obrazovku
+            if (newX < 0) newX = 0;
+            if (newX + routesPopup.offsetWidth > window.innerWidth) {
+                newX = window.innerWidth - routesPopup.offsetWidth;
+            }
+
+            // Omezíme vertikální pohyb tak, aby se popup nevešel mimo obrazovku
+            if (newY < 0) newY = 0;
+            if (newY + routesPopup.offsetHeight > window.innerHeight) {
+                newY = window.innerHeight - routesPopup.offsetHeight;
+            }
+
+            // Nastavení nové pozice
+            routesPopup.style.left = newX + 'px';
+            routesPopup.style.top = newY + 'px';
+        };
+
+        document.onmouseup = function () {
+            document.onmousemove = null;
+            document.onmouseup = null;
+        };
+    };
+
+    routesPopup.ondragstart = function () {
+        return false;
+    };
+</script>
+{{end}}
