@@ -32,6 +32,9 @@ func NewDiagoRouteExtension(r *router.Router) *DiagoRouteExtension {
 }
 
 func (e *DiagoRouteExtension) GetHtml(c *gin.Context) string {
+	if router.IsRelease() {
+		return ""
+	}
 	result, err := e.generateDiagoPanelPopupHTML(e.data)
 
 	if err != nil {
@@ -40,6 +43,10 @@ func (e *DiagoRouteExtension) GetHtml(c *gin.Context) string {
 	return result
 }
 func (e *DiagoRouteExtension) GetJSHtml(c *gin.Context) string {
+	if router.IsRelease() {
+		return ""
+	}
+
 	result, err := e.generateDiagoPanelJSHTML()
 
 	if err != nil {
@@ -48,6 +55,9 @@ func (e *DiagoRouteExtension) GetJSHtml(c *gin.Context) string {
 	return result
 }
 func (e *DiagoRouteExtension) GetPanelHtml(c *gin.Context) string {
+	if router.IsRelease() {
+		return ""
+	}
 	result, err := e.generateDiagoPanelHTML(e.data)
 
 	if err != nil {
@@ -59,6 +69,9 @@ func (e *DiagoRouteExtension) GetPanelHtml(c *gin.Context) string {
 func (e *DiagoRouteExtension) BeforeNext(c *gin.Context) {
 }
 func (e *DiagoRouteExtension) AfterNext(c *gin.Context) {
+	if router.IsRelease() {
+		return
+	}
 	e.currentRoute = c.FullPath()
 	var routes []DiagoRoute
 	for _, route := range e.router.GetRoutes() {
