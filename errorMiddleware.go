@@ -7,12 +7,10 @@ import (
 
 func ErrorHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Next() // Pokračuj v zpracování požadavku
+		c.Next()
 
-		// Získání statusu odpovědi
 		statusCode := c.Writer.Status()
 
-		// Pokud je status chybový (4xx nebo 5xx), přepíšeme odpověď
 		if statusCode >= 400 {
 			switch statusCode {
 			case http.StatusNotFound:
