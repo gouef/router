@@ -67,6 +67,8 @@ jobs:
             done < <(git log --format="%H" $PREV_TAG..HEAD)
           fi
           
+          COMMITS=$(echo "$COMMITS" | sed 's/[[:cntrl:]]//g')
+          
           echo "commits=$COMMITS" >> $GITHUB_ENV
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
