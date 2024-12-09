@@ -114,7 +114,6 @@ func (r *Router) AddRouteList(l *RouteList) *Router {
 		group = r.router.Group(l.pattern)
 	}
 
-	// Přidej všechny routy do skupiny nebo root routeru
 	for _, route := range l.routes {
 		if group != nil {
 			createNativeRoute(*group, route)
@@ -124,8 +123,7 @@ func (r *Router) AddRouteList(l *RouteList) *Router {
 		}
 	}
 
-	// Rekurzivně přidej děti
-	if l.children != nil { // Ověříme, že ukazatel na děti není nil
+	if l.children != nil {
 		for _, child := range l.children {
 			r.AddRouteList(child)
 		}
@@ -142,7 +140,6 @@ func createNativeRoute(g gin.RouterGroup, route *Route) gin.IRoutes {
 // createHandlerFunc internal, create gin.HandlerFunc
 func createHandlerFunc(handler interface{}) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Získáme typ parametru druhého argumentu handleru
 		handlerType := reflect.TypeOf(handler)
 		if handlerType.Kind() != reflect.Func || handlerType.NumIn() != 2 {
 
@@ -152,22 +149,20 @@ func createHandlerFunc(handler interface{}) gin.HandlerFunc {
 			return
 		}
 
-		// Vytvoříme nový prázdný objekt pro data
-		paramType := handlerType.In(1) // Druhý parametr handleru (T)
+		paramType := handlerType.In(1) // Second param of handler (T)
 		if paramType.Kind() != reflect.Ptr {
 			panic(fmt.Sprintf("Handler parameter must be a pointer to a struct, got %v", paramType.Kind()))
 		}
 		paramElemType := paramType.Elem()
 		paramValue := reflect.New(paramElemType).Interface()
 
-		// Bindujeme data z požadavku do struktury
 		err := c.ShouldBindUri(paramValue)
 		if err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
 
-		// Zavoláme handler s bindenou strukturou
+		// Call handler with binded struct
 		reflect.ValueOf(handler).Call([]reflect.Value{
 			reflect.ValueOf(c),
 			reflect.ValueOf(paramValue),
@@ -423,67 +418,4 @@ func (r *Router) Run(addr string) {
 	if err != nil {
 		return
 	}
-}
-
-func SetMode(mode string) {
-	gin.SetMode(mode)
-}
-
-func (r *Router) SetMode(mode string) *Router {
-	gin.SetMode(mode)
-	return r
-}
-
-func GetMode() string {
-	return gin.Mode()
-}
-
-func (r *Router) GetMode() string {
-	return GetMode()
-}
-
-func IsDebug() bool {
-	return gin.IsDebugging()
-}
-
-func EnableDebug() {
-	SetMode(DebugMode)
-}
-
-func IsTest() bool {
-	return gin.Mode() == TestMode
-}
-
-func EnableTest() {
-	SetMode(TestMode)
-}
-
-func IsRelease() bool {
-	return gin.Mode() == ReleaseMode
-}
-
-func EnableRelease() {
-	SetMode(ReleaseMode)
-}
-
-func (r *Router) IsDebug() bool {
-	return IsDebug()
-}
-
-func (r *Router) EnableDebug() {
-	EnableDebug()
-}
-func (r *Router) IsTest() bool {
-	return IsTest()
-}
-
-func (r *Router) EnableTest() {
-	EnableTest()
-}
-func (r *Router) IsRelease() bool {
-	return IsRelease()
-}
-
-func (r *Router) EnableRelease() {
-	EnableRelease()
 }

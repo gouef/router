@@ -13,17 +13,15 @@ func BindStruct[T any](c *gin.Context) (T, error) {
 	var dto T
 	val := reflect.ValueOf(&dto).Elem()
 
-	// Pro každý field ve struktuře provedeme bind
 	for i := 0; i < val.NumField(); i++ {
 		field := val.Type().Field(i)
-		paramName := field.Tag.Get("param") // Získá hodnotu z tagu `param`
+		paramName := field.Tag.Get("param")
 
 		if paramName != "" {
 			paramValue := c.Param(paramName)
 			fieldValue := val.Field(i)
 
 			if fieldValue.CanSet() {
-				// Podle typu hodnoty provedeme správné nastavení
 				switch fieldValue.Kind() {
 				case reflect.String:
 					fieldValue.SetString(paramValue)

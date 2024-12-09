@@ -10,13 +10,10 @@ import (
 )
 
 func TestRouterErrorHandlers(t *testing.T) {
-	// Nastavíme Gin do testovacího režimu
 	gin.SetMode(gin.TestMode)
 
-	// Vytvoření nového routeru
 	router := router2.NewRouter()
 
-	// Nastavení vlastních handlerů pro testování
 	router.SetErrorHandler(http.StatusNotFound, func(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "Custom 404",
@@ -29,7 +26,6 @@ func TestRouterErrorHandlers(t *testing.T) {
 		})
 	})
 
-	// Definice rout pro testování
 	router.AddRouteGet("ok", "/ok", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "This is OK"})
 	})
@@ -79,7 +75,7 @@ func TestRouterErrorHandlers(t *testing.T) {
 		assert.JSONEq(t, `{"error":"Custom 500"}`, w.Body.String())
 	})
 
-	// Test: Neznámá cesta (status 404)
+	// Test: unknown route (status 404)
 	t.Run("Test Unknown Route", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/unknown", nil)
 		w := httptest.NewRecorder()
