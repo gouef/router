@@ -7,6 +7,9 @@ require (
 	github.com/stretchr/testify v1.10.0
 )
 
+replace (
+	github.com/gouef/router/extensions => ./extensions
+)
 require (
 	github.com/bytedance/sonic v1.12.5 // indirect
 	github.com/bytedance/sonic/loader v0.2.1 // indirect
