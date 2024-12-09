@@ -8,6 +8,15 @@ import (
 	"reflect"
 )
 
+const (
+	// DebugMode indicates mode is debug.
+	DebugMode = "debug"
+	// ReleaseMode indicates mode is release.
+	ReleaseMode = "release"
+	// TestMode indicates mode is test.
+	TestMode = "test"
+)
+
 type ErrorHandlerFunc func(c *gin.Context)
 
 type Router struct {
@@ -414,4 +423,67 @@ func (r *Router) Run(addr string) {
 	if err != nil {
 		return
 	}
+}
+
+func SetMode(mode string) {
+	gin.SetMode(mode)
+}
+
+func (r *Router) SetMode(mode string) *Router {
+	gin.SetMode(mode)
+	return r
+}
+
+func GetMode() string {
+	return gin.Mode()
+}
+
+func (r *Router) GetMode() string {
+	return GetMode()
+}
+
+func IsDebug() bool {
+	return gin.IsDebugging()
+}
+
+func EnableDebug() {
+	SetMode(DebugMode)
+}
+
+func IsTest() bool {
+	return gin.Mode() == TestMode
+}
+
+func EnableTest() {
+	SetMode(TestMode)
+}
+
+func IsRelease() bool {
+	return gin.Mode() == ReleaseMode
+}
+
+func EnableRelease() {
+	SetMode(ReleaseMode)
+}
+
+func (r *Router) IsDebug() bool {
+	return IsDebug()
+}
+
+func (r *Router) EnableDebug() {
+	EnableDebug()
+}
+func (r *Router) IsTest() bool {
+	return IsTest()
+}
+
+func (r *Router) EnableTest() {
+	EnableTest()
+}
+func (r *Router) IsRelease() bool {
+	return IsRelease()
+}
+
+func (r *Router) EnableRelease() {
+	EnableRelease()
 }
