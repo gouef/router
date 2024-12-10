@@ -22,6 +22,7 @@ type ErrorHandlerFunc func(c *gin.Context)
 type Router struct {
 	router         *gin.Engine
 	routes         map[string]*Route
+	middlewares    []interface{}
 	errorHandlers  map[int]ErrorHandlerFunc
 	defaultHandler ErrorHandlerFunc
 }
