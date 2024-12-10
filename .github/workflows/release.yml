@@ -53,92 +53,103 @@ jobs:
       - name: Get commits since last tag
         id: commits
         run: |
-          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          # Získání aktuálního tagu
+          CURRENT_TAG=$(git describe --tags --abbrev=0 HEAD)
+          
+          # Kontrola, zda je aktuální tag stabilní (neobsahuje -beta, -rc apod.)
+          if [[ "$CURRENT_TAG" =~ -(beta|rc) ]]; then
+            # Pro beta/rc verze najdi předchozí libovolný tag
+            PREV_TAG=$(git describe --tags --abbrev=0 HEAD^)
+          else
+            # Pro stabilní verze najdi poslední stabilní tag (ignoruj beta/rc tagy)
+            PREV_TAG=$(git tag --sort=-creatordate | grep -E '^[^ ]+$' | grep -Ev '-(beta|rc)' | head -n 1)
+          fi
+          
+          # Pokud nebyl nalezen žádný předchozí tag, použij počáteční commit
           if [ -z "$PREV_TAG" ]; then
             echo "No previous tag found, using initial commit."
-            COMMITS="<ul>"
-            while read -r commit_hash; do
-              COMMIT_MSG=$(git log -n 1 --pretty=format:"%s" "$commit_hash")
-              AUTHOR=$(gh api "/repos/${{ github.repository }}/commits/$commit_hash" --jq '.author.login')
-              COMMITS+="<li>$COMMIT_MSG (@$AUTHOR)</li>"
-            done < <(git log --format="%H" HEAD)
-            COMMITS+="</ul>"
-          else
-            COMMITS="<ul>"
-            declare -A FIXUPS
-
-            # Iterace přes všechny commity od posledního tagu
-            while read -r commit_hash; do
-              COMMIT_MSG=$(git log -n 1 --pretty=format:"%s" "$commit_hash")
-              AUTHOR=$(gh api "/repos/${{ github.repository }}/commits/$commit_hash" --jq '.author.login')
-
-              # Kontrola, zda jde o fixup commit
-              if [[ "$COMMIT_MSG" == fixup!* ]]; then
-                ORIGINAL_HASH=$(git log -n 1 --format="%H" "$commit_hash"^)
-                FIXUPS["$ORIGINAL_HASH"]+="$commit_hash "
-                continue
-              fi
-
-              # Hledání uzavřených issue nebo PR pro tento commit
-              COMMIT_URL="https://github.com/${{ github.repository }}/commit/$commit_hash"
-              echo "Checking commit: $COMMIT_URL"
-          
-              ISSUE_URLS=$(gh api "/repos/${{ github.repository }}/issues?state=closed" --jq "[.[] | select(.body != null and (.body | test(\"(Resolve|Close).*${commit_hash}\")))][].html_url" || echo "")
-              ISSUE_COMMENT_URLS=$(gh api "/repos/${{ github.repository }}/issues/comments" --jq "[.[] | select(.body != null and (.body | test(\"(Resolve|Close).*${commit_hash}\")))][].html_url" || echo "")
-              PR_URLS=$(gh api "/repos/${{ github.repository }}/pulls?state=all" --jq "[.[] | select(.body != null and (.body | contains(\"${commit_hash}\")))][].html_url" || echo "")
-              REFERENCES="$ISSUE_URLS $ISSUE_COMMENT_URLS"
-          
-              echo "VANILA"
-          
-              echo "$ISSUE_URLS"
-              echo "$ISSUE_COMMENT_URLS"
-              echo "$PR_URLS"
-          
-              ISSUE_URLS=$(echo "$ISSUE_URLS" | sed 's/#issuecomment-[0-9]*//g')
-              ISSUE_COMMENT_URLS=$(echo "$ISSUE_COMMENT_URLS" | sed 's/#issuecomment-[0-9]*//g')
-
-              echo "CLEARED"
-              echo "$ISSUE_URLS"
-              echo "$ISSUE_COMMENT_URLS"
-              echo "$PR_URLS"
-              # Zpracování běžného commitu
-              COMMITS+="<li>$COMMIT_MSG (@$AUTHOR)"
-          
-              # Přidání všech odkazů na Issues
-              if [[ -n "$ISSUE_URLS" ]]; then
-                COMMITS+=", (Referenced in Issues: "
-                # Seznam odkazů oddělený mezerou
-                COMMITS+=$(echo "$ISSUE_URLS" | tr '\n' ' ' | sed -E "s|https://github.com/${{ github.repository }}/issues/([0-9]+)|<a href=\"https://github.com/${{ github.repository }}/issues/\1\">#\1</a>|g" | sed 's/ / , /g')
-                COMMITS=$(echo "$COMMITS" | sed 's/, $//')
-                COMMITS+=" )"
-              fi
-              
-              # Přidání všech odkazů na komentáře
-              if [[ -n "$ISSUE_COMMENT_URLS" ]]; then
-                COMMITS+=", (Referenced in Comments: "
-                # Seznam odkazů oddělený mezerou
-                COMMITS+=$(echo "$ISSUE_COMMENT_URLS" | tr '\n' ' '| sed -E "s|https://github.com/${{ github.repository }}/issues/([0-9]+)|<a href=\"https://github.com/${{ github.repository }}/issues/\1\">#\1</a>|g" | sed 's/ / , /g')
-                COMMITS=$(echo "$COMMITS" | sed 's/, $//')
-                COMMITS+=" )"
-              fi
-              
-              # Přidání všech odkazů na PRs
-              if [[ -n "$PR_URLS" ]]; then
-                COMMITS+=", (Referenced in PRs: "
-                COMMITS+=$(echo "$PR_URLS" | tr '\n' ' '| sed -E "s|https://github.com/${{ github.repository }}/pulls/([0-9]+)|<a href=\"https://github.com/${{ github.repository }}/pulls/\1\">#\1</a>|g" | sed 's/ / , /g')
-                COMMITS=$(echo "$COMMITS" | sed 's/, $//')
-                COMMITS+=" )"
-              fi
-
-              COMMITS+="</li>"
-            done < <(git log --format="%H" $PREV_TAG..HEAD)
-            COMMITS+="</ul>"
+            PREV_TAG=""
           fi
+          
+          #PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          
+          if [ -z "$PREV_TAG" ]; then
+            echo "No previous tag found, using initial commit."
+            PREV_TAG=$(git rev-list --max-parents=0 HEAD)
+          fi
+          
+          COMMITS="<ul>"
+          declare -A FIXUPS
 
-          echo "Result: $COMMITS"
+          # Iterace přes všechny commity od posledního tagu
+          while read -r commit_hash; do
+            COMMIT_MSG=$(git log -n 1 --pretty=format:"%s" "$commit_hash")
+            AUTHOR=$(gh api "/repos/${{ github.repository }}/commits/$commit_hash" --jq '.author.login')
+
+            # Kontrola, zda jde o fixup commit
+            if [[ "$COMMIT_MSG" == fixup!* ]]; then
+              ORIGINAL_HASH=$(git log -n 1 --format="%H" "$commit_hash"^)
+              FIXUPS["$ORIGINAL_HASH"]+="$commit_hash "
+              continue
+            fi
+
+            # Hledání uzavřených issue nebo PR pro tento commit
+            COMMIT_URL="https://github.com/${{ github.repository }}/commit/$commit_hash"
+            echo "Checking commit: $COMMIT_URL"
+        
+            ISSUE_URLS=$(gh api "/repos/${{ github.repository }}/issues?state=closed" --jq "[.[] | select(.body != null and (.body | test(\"(Resolve|Close).*${commit_hash}\")))][].html_url" || echo "")
+            ISSUE_COMMENT_URLS=$(gh api "/repos/${{ github.repository }}/issues/comments" --jq "[.[] | select(.body != null and (.body | test(\"(Resolve|Close).*${commit_hash}\")))][].html_url" || echo "")
+            PR_URLS=$(gh api "/repos/${{ github.repository }}/pulls?state=all" --jq "[.[] | select(.body != null and (.body | contains(\"${commit_hash}\")))][].html_url" || echo "")
+            REFERENCES="$ISSUE_URLS $ISSUE_COMMENT_URLS"
+        
+            echo "VANILA"
+        
+            echo "$ISSUE_URLS"
+            echo "$ISSUE_COMMENT_URLS"
+            echo "$PR_URLS"
+        
+            ISSUE_URLS=$(echo "$ISSUE_URLS" | sed 's/#issuecomment-[0-9]*//g')
+            ISSUE_COMMENT_URLS=$(echo "$ISSUE_COMMENT_URLS" | sed 's/#issuecomment-[0-9]*//g')
+
+            echo "CLEARED"
+            echo "$ISSUE_URLS"
+            echo "$ISSUE_COMMENT_URLS"
+            echo "$PR_URLS"
+            # Zpracování běžného commitu
+            COMMITS+="<li>$COMMIT_MSG (@$AUTHOR)"
+        
+            # Přidání všech odkazů na Issues
+            if [[ -n "$ISSUE_URLS" ]]; then
+              COMMITS+=", (Referenced in Issues: "
+              # Seznam odkazů oddělený mezerou
+              COMMITS+=$(echo "$ISSUE_URLS" | tr '\n' ' ' | sed -E "s|https://github.com/${{ github.repository }}/issues/([0-9]+)|<a href=\"https://github.com/${{ github.repository }}/issues/\1\">#\1</a>|g" | sed 's/ / , /g')
+              COMMITS=$(echo "$COMMITS" | sed 's/, $//')
+              COMMITS+=" )"
+            fi
+            
+            # Přidání všech odkazů na komentáře
+            if [[ -n "$ISSUE_COMMENT_URLS" ]]; then
+              COMMITS+=", (Referenced in Comments: "
+              # Seznam odkazů oddělený mezerou
+              COMMITS+=$(echo "$ISSUE_COMMENT_URLS" | tr '\n' ' '| sed -E "s|https://github.com/${{ github.repository }}/issues/([0-9]+)|<a href=\"https://github.com/${{ github.repository }}/issues/\1\">#\1</a>|g" | sed 's/ / , /g')
+              COMMITS=$(echo "$COMMITS" | sed 's/, $//')
+              COMMITS+=" )"
+            fi
+            
+            # Přidání všech odkazů na PRs
+            if [[ -n "$PR_URLS" ]]; then
+              COMMITS+=", (Referenced in PRs: "
+              COMMITS+=$(echo "$PR_URLS" | tr '\n' ' '| sed -E "s|https://github.com/${{ github.repository }}/pulls/([0-9]+)|<a href=\"https://github.com/${{ github.repository }}/pulls/\1\">#\1</a>|g" | sed 's/ / , /g')
+              COMMITS=$(echo "$COMMITS" | sed 's/, $//')
+              COMMITS+=" )"
+            fi
+
+            COMMITS+="</li>"
+          done < <(git log --format="%H" $PREV_TAG..HEAD)
+          COMMITS+="</ul>"
+
           # Odstranění nechtěných znaků
           COMMITS=$(echo "$COMMITS" | sed 's/[[:cntrl:]]//g')
-          echo "Result clear: $COMMITS"
           echo "commits=$COMMITS" >> $GITHUB_ENV
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
