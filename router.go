@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/gouef/mode"
 	"net/http"
 	"reflect"
 )
@@ -25,6 +26,7 @@ type Router struct {
 	middlewares    []interface{}
 	errorHandlers  map[int]ErrorHandlerFunc
 	defaultHandler ErrorHandlerFunc
+	mode           *mode.Mode
 }
 
 // NewRouter create new Router
@@ -41,6 +43,7 @@ func NewRouter() *Router {
 				"description": "No specific handler defined for this status",
 			})
 		},
+		mode: mode.NewBasicMode(),
 	}
 }
 
