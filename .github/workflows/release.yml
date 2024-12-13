@@ -56,27 +56,42 @@ jobs:
           # Získání aktuálního tagu
           CURRENT_TAG=$(git describe --tags --abbrev=0 HEAD)
           
-          # Kontrola, zda je aktuální tag stabilní (neobsahuje -beta, -rc apod.)
-          if [[ "$CURRENT_TAG" =~ -(beta|rc) ]]; then
-            # Pro beta/rc verze najdi předchozí libovolný tag
-            PREV_TAG=$(git describe --tags --abbrev=0 HEAD^)
-          else
-            # Pro stabilní verze najdi poslední stabilní tag (ignoruj beta/rc tagy)
-            PREV_TAG=$(git tag --sort=-creatordate | grep -E '^[^ ]+$' | grep -Ev '-(beta|rc)' | head -n 1)
-          fi
-          
-          # Pokud nebyl nalezen žádný předchozí tag, použij počáteční commit
-          if [ -z "$PREV_TAG" ]; then
-            echo "No previous tag found, using initial commit."
+          # Funkce pro získání předchozího stabilního tagu
+          get_previous_stable_tag() {
             PREV_TAG=""
+            # Procházej všechny tagy v obráceném pořadí (od nejnovějšího)
+            for tag in $(git tag --sort=-creatordate); do
+              # Pokud je tag stabilní (např. v1.0.0, v1.2.3, atd.), ale není stejný jako aktuální
+              if [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] && [[ "$tag" != "$CURRENT_TAG" ]]; then
+                PREV_TAG=$tag
+                break
+              fi
+            done
+            echo $PREV_TAG
+          }
+
+
+          # Pokud je aktuální tag beta nebo rc, najdi poslední stabilní verzi
+          if [[ "$CURRENT_TAG" =~ -beta || "$CURRENT_TAG" =~ -rc ]]; then
+            # Najdi poslední stabilní verzi (ignoruj beta/rc tagy)
+            PREV_TAG=$(git tag --sort=-creatordate | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
+          else
+            # Pokud je stabilní verze, použij předchozí stabilní tag
+            PREV_TAG=$(git tag --sort=-creatordate | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | grep -B 1 "$CURRENT_TAG" | head -n 1)
           fi
           
-          #PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [[ "$CURRENT_TAG" == "$PREV_TAG" ]]; then
+            echo "Current tag is the same as the previous tag, using the previous stable tag."
+            PREV_TAG=$(get_previous_stable_tag)
+          fi
           
           if [ -z "$PREV_TAG" ]; then
             echo "No previous tag found, using initial commit."
             PREV_TAG=$(git rev-list --max-parents=0 HEAD)
           fi
+          
+          echo "PREV TAG: $PREV_TAG"
+          echo "CURRENT TAG: $CURRENT_TAG"
           
           COMMITS="<ul>"
           declare -A FIXUPS
