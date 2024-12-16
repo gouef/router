@@ -6,5 +6,8 @@ on:
 jobs:
   test:
     uses: gouef/github-lib-template/.github/workflows/shared_tests.yml@main
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     with:
       slug: ${{ github.repository }}
