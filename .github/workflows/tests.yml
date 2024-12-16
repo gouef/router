@@ -1,0 +1,8 @@
+name: Run tests and upload coverage
+
+on:
+  push
+
+jobs:
+  test:
+    uses: gouef/github-lib-template/.github/workflows/shared_tests.yml@main
