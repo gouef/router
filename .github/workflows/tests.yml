@@ -8,5 +8,3 @@ jobs:
     uses: gouef/github-lib-template/.github/workflows/shared_tests.yml@main
     with:
       slug: ${{ github.repository }}
-    secrets:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
