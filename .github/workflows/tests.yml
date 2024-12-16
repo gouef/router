@@ -6,3 +6,5 @@ on:
 jobs:
   test:
     uses: gouef/github-lib-template/.github/workflows/shared_tests.yml@main
+    with:
+      slug: gouef/router
