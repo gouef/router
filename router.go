@@ -32,6 +32,7 @@ type Router struct {
 // NewRouter create new Router
 func NewRouter() *Router {
 	router := gin.New()
+	m, _ := mode.NewBasicMode()
 	return &Router{
 		router:        router,
 		routes:        make(map[string]*Route),
@@ -43,7 +44,7 @@ func NewRouter() *Router {
 				"description": "No specific handler defined for this status",
 			})
 		},
-		mode: mode.NewBasicMode(),
+		mode: m,
 	}
 }
 
