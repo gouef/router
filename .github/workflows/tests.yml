@@ -14,7 +14,7 @@ permissions:
 #    uses: gouef/github-lib-template/.github/workflows/shared_tests.yml@main
 #    with:
 #      slug: ${{ github.repository }}
-
+jobs:
   test:
     name: Run tests and collect coverage
     runs-on: ubuntu-latest
