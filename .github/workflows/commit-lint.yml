@@ -16,6 +16,8 @@ on:
       - develop
       - feature/**
       - release/**
+      - test/**
+      - bugfix/**
 
 jobs:
   lint-commits:
