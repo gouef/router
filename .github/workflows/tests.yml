@@ -1,6 +1,7 @@
 name: Run tests and upload coverage
 
 on:
+  workflow_dispatch:
   pull_request:
     types: [opened, synchronize, edited]
   push:
@@ -9,64 +10,15 @@ permissions:
   id-token: write
   contents: read
 
-#jobs:
-#  test:
-#    uses: gouef/github-lib-template/.github/workflows/shared_tests.yml@main
-#    with:
-#      slug: ${{ github.repository }}
 jobs:
   test:
     name: Run tests and collect coverage
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - name: Run tests and upload to coverage
+        uses: gouef/go-test-with-coverage-action@main
         with:
           go-version: 1.23.4
-
-      - name: Install dependencies
-        run: go mod tidy
-
-      - name: Run tests
-        run: go test -covermode=set ./... -coverprofile=coverage.txt
-
-      - name: Check coverage file
-        run: cat coverage.txt
-      - name: Debug info
-        run: |
-          echo "Repo: ${{ github.repository }}"
-      - name: Test if CODECOV_TOKEN is available
-        run: |
-          if [ -z "${{ secrets.CODECOV_TOKEN }}" ]; then
-            echo "CODECOV_TOKEN is NOT set"
-          else
-            echo "CODECOV_TOKEN is available"
-          fi
-      - name: Debug Codecov Token
-        run: |
-          echo "Codecov Token: ${{ secrets.CODECOV_TOKEN }}"
         env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      - name: Debug Codecov Upload
-        run: bash <(curl -s https://codecov.io/bash) -t ${{ secrets.CODECOV_TOKEN }} -f coverage.txt -r github.com/${{ github.repository }}
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: Upload results to Codecov
-        uses: codecov/codecov-action@v5
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: coverage.txt
-          name: ${{ github.workflow }}
-          fail_ci_if_error: true
-          verbose: true

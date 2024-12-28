@@ -8,7 +8,7 @@ Router for go (extending gin)
 [![Go Report Card](https://goreportcard.com/badge/github.com/gouef/router)](https://goreportcard.com/report/github.com/gouef/router)
 [![codecov](https://codecov.io/github/gouef/router/branch/main/graph/badge.svg?token=YUG8EMH6Q8)](https://codecov.io/github/gouef/router)
 
-## Vesions
+## Versions
 ![Stable Version](https://img.shields.io/github/v/release/gouef/router?label=Stable&labelColor=green)
 ![GitHub Release](https://img.shields.io/github/v/release/gouef/router?label=RC&include_prereleases&filter=*rc*&logoSize=diago)
 ![GitHub Release](https://img.shields.io/github/v/release/gouef/router?label=Beta&include_prereleases&filter=*beta*&logoSize=diago)

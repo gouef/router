@@ -1,7 +1,7 @@
 name: Commit Lint
 
 on:
-  workflow_call: # Trigger pro reusable workflow
+  workflow_call:
     inputs:
       branch:
         required: false
@@ -21,4 +21,7 @@ on:
 
 jobs:
   lint-commits:
-    uses: gouef/github-lib-template/.github/workflows/shared_commit-lint.yml@main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Commit lint
+        uses: gouef/commit-lint-action@main

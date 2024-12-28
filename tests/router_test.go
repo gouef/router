@@ -12,7 +12,6 @@ import (
 func TestRouter_AddRoute(t *testing.T) {
 	router := router2.NewRouter()
 
-	// DTO a handler
 	type ProductDetailParams struct {
 		Locale string `uri:"locale" binding:"required"`
 		ID     int    `uri:"id" binding:"required"`
@@ -27,7 +26,6 @@ func TestRouter_AddRoute(t *testing.T) {
 		assert.Equal(t, 42, params.ID)
 	}
 
-	// Přidání routy
 	router.AddRoute("products:detail", "/:locale/products/:id", productDetailHandler, router2.Get)
 	router.AddRoute(
 		"product:detail",
@@ -42,21 +40,17 @@ func TestRouter_AddRoute(t *testing.T) {
 			assert.Equal(t, 42, p.ID)
 		}, router2.Get)
 
-	// Testování požadavku
 	req := httptest.NewRequest(http.MethodGet, "/cs/products/42", nil)
 	w := httptest.NewRecorder()
 	router.GetNativeRouter().ServeHTTP(w, req)
 
-	// Ověření výsledku
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.JSONEq(t, `{"locale":"cs","id":42}`, w.Body.String())
 
-	// Testování požadavku
 	req2 := httptest.NewRequest(http.MethodGet, "/product/42", nil)
 	w2 := httptest.NewRecorder()
 	router.GetNativeRouter().ServeHTTP(w2, req2)
 
-	// Ověření výsledku
 	assert.Equal(t, http.StatusOK, w2.Code)
 	assert.JSONEq(t, `{"id":42}`, w2.Body.String())
 }
@@ -76,40 +70,32 @@ func TestRouter_AddRouteWithoutParams(t *testing.T) {
 		assert.Equal(t, "42", id)
 	}
 
-	// Přidání routy
 	router.AddRoute("products:detail", "/:locale/products/:id", productDetailHandler, router2.Get)
 
-	// Testování požadavku
 	req := httptest.NewRequest(http.MethodGet, "/cs/products/42", nil)
 	w := httptest.NewRecorder()
 	router.GetNativeRouter().ServeHTTP(w, req)
 
-	// Ověření výsledku
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.JSONEq(t, `{"locale":"cs","id":"42"}`, w.Body.String())
 }
 
 func TestRouterRoutesKeys(t *testing.T) {
-	// Vytvoření nového routeru
 	r := router2.NewRouter()
 
-	// Přidání tras
 	r.AddRoute("home", "/home", func(c *gin.Context) {}, router2.Get)
 	r.AddRoute("about", "/about", func(c *gin.Context) {}, router2.Get)
 	r.AddRoute("contact", "/contact", func(c *gin.Context) {}, router2.Get)
 	r.AddRoute("product:detail", "/product/:id", func(c *gin.Context) {}, router2.Get)
 
-	// Očekávané klíče
 	expectedKeys := []string{"home", "about", "contact", "product:detail"}
 
-	// Kontrola klíčů
 	for _, key := range expectedKeys {
 		if _, exists := r.GetRoutes()[key]; !exists {
 			t.Errorf("Expected key '%s' to exist in Router.routes, but it does not.", key)
 		}
 	}
 
-	// Kontrola počtu klíčů
 	if len(r.GetRoutes()) != len(expectedKeys) {
 		t.Errorf("Expected %d routes, but got %d", len(expectedKeys), len(r.GetRoutes()))
 	}

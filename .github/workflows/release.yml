@@ -17,6 +17,13 @@ on:
 
 jobs:
   call-release:
-    uses: gouef/github-lib-template/.github/workflows/shared_release.yml@main
-    with:
-      branch: ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Create release
+        uses: gouef/release-action@main
+        with:
+          branch: ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
