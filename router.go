@@ -10,23 +10,23 @@ import (
 )
 
 const (
-	// DebugMode indicates mode is debug.
+	// DebugMode indicates Mode is debug.
 	DebugMode = "debug"
-	// ReleaseMode indicates mode is release.
+	// ReleaseMode indicates Mode is release.
 	ReleaseMode = "release"
-	// TestMode indicates mode is test.
+	// TestMode indicates Mode is test.
 	TestMode = "test"
 )
 
 type ErrorHandlerFunc func(c *gin.Context)
 
 type Router struct {
-	router         *gin.Engine
-	routes         map[string]*Route
+	Router         *gin.Engine
+	Routes         map[string]*Route
 	middlewares    []interface{}
-	errorHandlers  map[int]ErrorHandlerFunc
-	defaultHandler ErrorHandlerFunc
-	mode           *mode.Mode
+	ErrorHandlers  map[int]ErrorHandlerFunc
+	DefaultHandler ErrorHandlerFunc
+	Mode           *mode.Mode
 }
 
 // NewRouter create new Router
@@ -34,32 +34,32 @@ func NewRouter() *Router {
 	router := gin.New()
 	m, _ := mode.NewBasicMode()
 	return &Router{
-		router:        router,
-		routes:        make(map[string]*Route),
-		errorHandlers: make(map[int]ErrorHandlerFunc),
-		defaultHandler: func(c *gin.Context) {
+		Router:        router,
+		Routes:        make(map[string]*Route),
+		ErrorHandlers: make(map[int]ErrorHandlerFunc),
+		DefaultHandler: func(c *gin.Context) {
 			status := c.Writer.Status()
 			c.JSON(status, gin.H{
 				"error":       "An error occurred",
 				"description": "No specific handler defined for this status",
 			})
 		},
-		mode: m,
+		Mode: m,
 	}
 }
 
 func (r *Router) SetDefaultErrorHandler(handler ErrorHandlerFunc) *Router {
-	r.defaultHandler = handler
-	r.router.NoRoute(func(cc *gin.Context) {
+	r.DefaultHandler = handler
+	r.Router.NoRoute(func(cc *gin.Context) {
 		handler(cc)
 	})
 
 	return r
 }
 
-// GetRoutes return list of routes
+// GetRoutes return list of Routes
 func (r *Router) GetRoutes() map[string]*Route {
-	return r.routes
+	return r.Routes
 }
 
 // SetErrorHandler set Error handler for status code
@@ -75,11 +75,11 @@ func (r *Router) GetRoutes() map[string]*Route {
 func (r *Router) SetErrorHandler(status int, handler ErrorHandlerFunc) *Router {
 
 	if status == 404 {
-		r.router.NoRoute(func(cc *gin.Context) {
+		r.Router.NoRoute(func(cc *gin.Context) {
 			handler(cc)
 		})
 	}
-	r.errorHandlers[status] = handler
+	r.ErrorHandlers[status] = handler
 
 	return r
 }
@@ -92,10 +92,10 @@ func (r *Router) ErrorHandlerMiddleware() gin.HandlerFunc {
 		status := c.Writer.Status()
 
 		if status >= 400 {
-			if handler, exists := r.errorHandlers[status]; exists {
+			if handler, exists := r.ErrorHandlers[status]; exists {
 				handler(c)
 			} else {
-				r.defaultHandler(c)
+				r.DefaultHandler(c)
 			}
 		}
 	}
@@ -116,13 +116,13 @@ func (r *Router) ErrorHandlerMiddleware() gin.HandlerFunc {
 func (r *Router) AddRouteList(l *RouteList) *Router {
 	var group *gin.RouterGroup
 	if l.pattern != "" {
-		group = r.router.Group(l.pattern)
+		group = r.Router.Group(l.pattern)
 	}
 
 	for _, route := range l.routes {
 		if group != nil {
 			createNativeRoute(*group, route)
-			r.routes[route.name] = route
+			r.Routes[route.name] = route
 		} else {
 			r.AddRoute(route.name, route.pattern, route.handler, route.method)
 		}
@@ -192,9 +192,9 @@ func createHandlerFunc(handler interface{}) gin.HandlerFunc {
 //		})
 //	}, Get)
 func (r *Router) AddRoute(name string, pattern string, handler interface{}, method Method) *Router {
-	r.routes[name] = NewRoute(name, pattern, handler, method, map[string]*Route{})
+	r.Routes[name] = NewRoute(name, pattern, handler, method, map[string]*Route{})
 
-	r.router.Handle(method.String(), pattern, createHandlerFunc(handler))
+	r.Router.Handle(method.String(), pattern, createHandlerFunc(handler))
 
 	return r
 }
@@ -383,7 +383,7 @@ func (r *Router) AddRouteTrace(name string, pattern string, handler interface{})
 }
 
 func (r *Router) GenerateUrlByName(name string, params map[string]interface{}) (string, error) {
-	route, exists := r.routes[name]
+	route, exists := r.Routes[name]
 
 	if !exists {
 		return "", errors.New(fmt.Sprintf("route with name %s not found", name))
@@ -399,15 +399,15 @@ func (r *Router) GenerateUrlByPattern(pattern string, params map[string]interfac
 // GetNativeRouter return gin router engine
 // Docs continue in gin.Engine
 func (r *Router) GetNativeRouter() *gin.Engine {
-	return r.router
+	return r.Router
 }
 
 // Run attaches the router to a http.Server and starts listening and serving HTTP requests.
 // It is a shortcut for http.ListenAndServe(addr, router)
 // Note: this method will block the calling goroutine indefinitely unless an error happens.
-func (r *Router) Run(addr string) {
-	router := r.router
-	if h, ok := r.errorHandlers[404]; ok {
+func (r *Router) Run(addr string) error {
+	router := r.Router
+	if h, ok := r.ErrorHandlers[404]; ok {
 		router.NoRoute(func(c *gin.Context) {
 			h(c)
 		})
@@ -421,6 +421,8 @@ func (r *Router) Run(addr string) {
 	router.Use(r.ErrorHandlerMiddleware())
 	err := router.Run(addr)
 	if err != nil {
-		return
+		return err
 	}
+
+	return nil
 }

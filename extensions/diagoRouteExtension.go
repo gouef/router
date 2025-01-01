@@ -33,7 +33,7 @@ type DiagoRouteData struct {
 type DefaultRouteTemplateProvider struct{}
 
 func (p *DefaultRouteTemplateProvider) GetTemplate() string {
-	return GetDiagoRoutePanelPopupTemplate()
+	return GetDiagoRoutePanelTemplate()
 }
 
 func NewDefaultTemplateProvider() *DefaultRouteTemplateProvider {
