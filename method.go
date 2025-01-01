@@ -44,12 +44,16 @@ func (m Method) String() string {
 		return http.MethodPatch
 	case Options:
 		return http.MethodOptions
+	case Connect:
+		return http.MethodConnect
+	case Trace:
+		return http.MethodTrace
 	default:
 		return "Unknown"
 	}
 }
 
-func FromString(method string) (Method, bool) {
+func MethodFromString(method string) (Method, bool) {
 	m, exists := stringToMethod[method]
 	return m, exists
 }

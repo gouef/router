@@ -5,11 +5,11 @@ import (
 	"github.com/gouef/mode"
 )
 
-func (r *Router) isMode(mode string) bool {
+func (r *Router) IsMode(mode string) bool {
 	m, err := r.mode.IsMode(mode)
 
 	if err != nil {
-		panic("non exists mode")
+		return false
 	}
 
 	return m
@@ -19,7 +19,7 @@ func (r *Router) EnableMode(mode string) bool {
 	m, err := r.mode.EnableMode(mode)
 
 	if err != nil {
-		panic("non exists mode")
+		return false
 	}
 
 	switch mode {
@@ -34,21 +34,21 @@ func (r *Router) EnableMode(mode string) bool {
 }
 
 func (r *Router) IsDebug() bool {
-	return r.isMode(mode.DebugMode)
+	return r.IsMode(mode.DebugMode)
 }
 
 func (r *Router) EnableDebug() bool {
 	return r.EnableMode(mode.DebugMode)
 }
 func (r *Router) IsTest() bool {
-	return r.isMode(mode.TestMode)
+	return r.IsMode(mode.TestMode)
 }
 
 func (r *Router) EnableTest() bool {
 	return r.EnableMode(mode.TestMode)
 }
 func (r *Router) IsRelease() bool {
-	return r.isMode(mode.ReleaseMode)
+	return r.IsMode(mode.ReleaseMode)
 }
 
 // EnableRelease set mode release for project and gin
