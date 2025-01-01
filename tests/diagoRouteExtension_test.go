@@ -62,6 +62,10 @@ func TestDiagoRouteExtension_GetJSHtml(t *testing.T) {
 
 	jsHtml := routeExtension.GetJSHtml(nil)
 	assert.Contains(t, jsHtml, "function closeRoutesPopup()")
+
+	r.EnableRelease()
+	jsHtml = routeExtension.GetJSHtml(nil)
+	assert.Contains(t, jsHtml, "")
 }
 
 type mockDiagoPanelGeneratorWithError struct{}
@@ -72,6 +76,7 @@ func (m *mockDiagoPanelGeneratorWithError) GenerateHTML(name string, templatePro
 
 func TestDiagoRouteExtension_GetPanelHtml_ErrorHandling(t *testing.T) {
 	r := router.NewRouter()
+	r.EnableTest()
 	routeExtension := extensions.NewDiagoRouteExtension(r)
 
 	gen := &mockDiagoPanelGeneratorWithError{}
