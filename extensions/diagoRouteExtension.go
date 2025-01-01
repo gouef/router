@@ -5,9 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gouef/diago"
 	"github.com/gouef/router"
-	"html/template"
 	"log"
-	"strings"
 )
 
 type DiagoRouteExtension struct {
@@ -35,7 +33,7 @@ type DiagoRouteData struct {
 type DefaultRouteTemplateProvider struct{}
 
 func (p *DefaultRouteTemplateProvider) GetTemplate() string {
-	return GetDiagoRoutePanelPopupTemplate()
+	return GetDiagoRoutePanelTemplate()
 }
 
 func NewDefaultTemplateProvider() *DefaultRouteTemplateProvider {
@@ -172,52 +170,4 @@ func (e *DiagoRouteExtension) AfterNext(c *gin.Context) {
 		CurrentRoute: e.currentRoute,
 		Routes:       routes,
 	}
-}
-
-func (e *DiagoRouteExtension) generateDiagoPanelHTML(data DiagoRouteData) (string, error) {
-	tpl, err := template.New("diagoRoutePanel").Parse(GetDiagoRoutePanelTemplate())
-	if err != nil {
-		return "", err
-	}
-
-	var builder strings.Builder
-
-	err = tpl.Execute(&builder, data)
-	if err != nil {
-		return "", err
-	}
-
-	return builder.String(), nil
-}
-
-func (e *DiagoRouteExtension) generateDiagoPanelPopupHTML(data DiagoRouteData) (string, error) {
-	tpl, err := template.New("diagoRoutePanelPopup").Parse(GetDiagoRoutePanelPopupTemplate())
-	if err != nil {
-		return "", err
-	}
-
-	var builder strings.Builder
-
-	err = tpl.Execute(&builder, data)
-	if err != nil {
-		return "", err
-	}
-
-	return builder.String(), nil
-}
-
-func (e *DiagoRouteExtension) generateDiagoPanelJSHTML() (string, error) {
-	tpl, err := template.New("diagoRoutePanelJS").Parse(GetDiagoRoutePanelJSTemplate())
-	if err != nil {
-		return "", err
-	}
-
-	var builder strings.Builder
-
-	err = tpl.Execute(&builder, nil)
-	if err != nil {
-		return "", err
-	}
-
-	return builder.String(), nil
 }

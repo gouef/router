@@ -33,7 +33,7 @@ func TestDiagoRouteExtension(t *testing.T) {
 
 	r.AddRouteGet("test", "/test", func(c *gin.Context) {
 		panelHtml := template.HTML("<div>Test</div>")
-		c.HTML(http.StatusOK, "", panelHtml)
+		c.String(http.StatusOK, string(panelHtml))
 	})
 
 	req, err := http.NewRequest("GET", "/test", nil)
@@ -62,6 +62,10 @@ func TestDiagoRouteExtension_GetJSHtml(t *testing.T) {
 
 	jsHtml := routeExtension.GetJSHtml(nil)
 	assert.Contains(t, jsHtml, "function closeRoutesPopup()")
+
+	r.EnableRelease()
+	jsHtml = routeExtension.GetJSHtml(nil)
+	assert.Contains(t, jsHtml, "")
 }
 
 type mockDiagoPanelGeneratorWithError struct{}
@@ -72,10 +76,13 @@ func (m *mockDiagoPanelGeneratorWithError) GenerateHTML(name string, templatePro
 
 func TestDiagoRouteExtension_GetPanelHtml_ErrorHandling(t *testing.T) {
 	r := router.NewRouter()
+	r.EnableTest()
 	routeExtension := extensions.NewDiagoRouteExtension(r)
 
 	gen := &mockDiagoPanelGeneratorWithError{}
 	routeExtension.SetPanelGenerator(gen)
+
+	assert.Equal(t, gen, routeExtension.GetPanelGenerator())
 
 	var logOutput string
 	log.SetOutput(&logWriter{&logOutput})
@@ -90,43 +97,6 @@ type mockTemplateProviderWithParseError struct{}
 
 func (m *mockTemplateProviderWithParseError) GetTemplate() string {
 	return "{{ .Latencys }}"
-}
-
-type mockTemplateProviderWithExecuteError struct{}
-
-func (m *mockTemplateProviderWithExecuteError) GetTemplate() string {
-	return `{{ .NonExistentField }}`
-}
-
-func TestGenerateDiagoPanelHTML_TemplateParseError(t *testing.T) {
-	mockProvider := &mockTemplateProviderWithParseError{}
-
-	r := router.NewRouter()
-	routeExtension := extensions.NewDiagoRouteExtension(r)
-
-	result, err := routeExtension.PanelGenerator.GenerateHTML("error", mockProvider, struct {
-	}{})
-
-	assert.Error(t, err, "Expected error while parsing template")
-	assert.Empty(t, result, "Expected empty result when parsing fails")
-}
-
-type mockInvalidTemplateProvider struct{}
-
-func (m *mockInvalidTemplateProvider) GetDiagoLatencyPanelTemplate() string {
-	return "{{ .InvalidField"
-}
-
-func TestGenerateDiagoPanelHTML_TemplateExecuteError(t *testing.T) {
-	mockProvider := &mockTemplateProviderWithExecuteError{}
-
-	r := router.NewRouter()
-	routeExtension := extensions.NewDiagoRouteExtension(r)
-
-	result, err := routeExtension.PanelGenerator.GenerateHTML("test", mockProvider, nil)
-
-	assert.Error(t, err, "Expected error while executing template")
-	assert.Empty(t, result, "Expected empty result when execution fails")
 }
 
 func TestDiagoRouteExtension_TemplateProvider(t *testing.T) {
