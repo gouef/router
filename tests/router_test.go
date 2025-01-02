@@ -133,10 +133,8 @@ func TestRoute_AddChild(t *testing.T) {
 }
 
 func TestRouterRun(t *testing.T) {
-	// Nastavení Gin routeru
 	gin.SetMode(gin.TestMode)
 
-	// Mock error handler
 	mock404Handler := func(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Mock 404"})
 	}
@@ -148,36 +146,55 @@ func TestRouterRun(t *testing.T) {
 		}
 	}
 
-	// Vytvoření instance Router
 	r := router2.NewRouter()
 	r.SetDefaultErrorHandler(mock404Handler)
 
 	r.SetErrorHandler(404, mock404Handler)
 	r.GetNativeRouter().Use(mockMiddleware())
 
-	// Mock HTTP server pomocí httptest
 	server := httptest.NewServer(r.GetNativeRouter())
 	defer server.Close()
 
-	// Volání Run (musíme mocknout funkci Run, aby neblokovala)
 	go func() {
 		err := r.Run(":0")
 		require.NoError(t, err)
 	}()
 
-	// Test 404 handleru
 	resp, err := http.Get(server.URL + "/nonexistent")
 	require.NoError(t, err)
 	defer resp.Body.Close()
 
 	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 
-	// Ověření těla odpovědi
 	var body map[string]string
 	err = json.NewDecoder(resp.Body).Decode(&body)
 	require.NoError(t, err)
 	assert.Equal(t, "Mock 404", body["error"])
 
-	// Test middleware
 	assert.Equal(t, "middleware", resp.Header.Get("X-Test"))
+}
+
+func TestRouterRunDefault(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	r := router2.NewRouter()
+
+	server := httptest.NewServer(r.GetNativeRouter())
+	defer server.Close()
+
+	go func() {
+		err := r.Run(":0")
+		require.NoError(t, err)
+	}()
+
+	resp, err := http.Get(server.URL + "/nonexistent")
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+
+	var body map[string]string
+	err = json.NewDecoder(resp.Body).Decode(&body)
+	require.NoError(t, err)
+	assert.Equal(t, "Custom 404", body["error"])
 }
