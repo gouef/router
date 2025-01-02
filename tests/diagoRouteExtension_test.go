@@ -93,6 +93,44 @@ func TestDiagoRouteExtension_GetPanelHtml_ErrorHandling(t *testing.T) {
 	assert.Contains(t, logOutput, "Diago Route Extension: mock error generating HTML", "Error message should be logged")
 }
 
+func TestDiagoRouteExtension_GetJSHtml_ErrorHandling(t *testing.T) {
+	r := router.NewRouter()
+	r.EnableTest()
+	routeExtension := extensions.NewDiagoRouteExtension(r)
+
+	gen := &mockDiagoPanelGeneratorWithError{}
+	routeExtension.SetPanelGenerator(gen)
+
+	assert.Equal(t, gen, routeExtension.GetPanelGenerator())
+
+	var logOutput string
+	log.SetOutput(&logWriter{&logOutput})
+
+	panelHtml := routeExtension.GetJSHtml(nil)
+	assert.Empty(t, panelHtml, "Panel HTML should be empty when there's an error")
+
+	assert.Contains(t, logOutput, "Diago Route Extension: mock error generating HTML", "Error message should be logged")
+}
+
+func TestDiagoRouteExtension_GetHtml_ErrorHandling(t *testing.T) {
+	r := router.NewRouter()
+	r.EnableTest()
+	routeExtension := extensions.NewDiagoRouteExtension(r)
+
+	gen := &mockDiagoPanelGeneratorWithError{}
+	routeExtension.SetPanelGenerator(gen)
+
+	assert.Equal(t, gen, routeExtension.GetPanelGenerator())
+
+	var logOutput string
+	log.SetOutput(&logWriter{&logOutput})
+
+	panelHtml := routeExtension.GetHtml(nil)
+	assert.Empty(t, panelHtml, "Panel HTML should be empty when there's an error")
+
+	assert.Contains(t, logOutput, "Diago Route Extension: mock error generating HTML", "Error message should be logged")
+}
+
 type mockTemplateProviderWithParseError struct{}
 
 func (m *mockTemplateProviderWithParseError) GetTemplate() string {
