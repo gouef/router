@@ -95,9 +95,6 @@ func (e *DiagoRouteExtension) GetPanelGenerator() diago.PanelGenerator {
 }
 
 func (e *DiagoRouteExtension) GetHtml(c *gin.Context) string {
-	if router.IsRelease() {
-		return ""
-	}
 	result, err := e.PanelGenerator.GenerateHTML("diagoRoutePanelPopup", e.PopupTemplateProvider, e.data)
 
 	if err != nil {
@@ -106,9 +103,6 @@ func (e *DiagoRouteExtension) GetHtml(c *gin.Context) string {
 	return result
 }
 func (e *DiagoRouteExtension) GetJSHtml(c *gin.Context) string {
-	if router.IsRelease() {
-		return ""
-	}
 
 	//result, err := e.generateDiagoPanelJSHTML()
 	result, err := e.PanelGenerator.GenerateHTML("diagoRoutePanelJS", e.JSTemplateProvider, e.data)
@@ -118,10 +112,8 @@ func (e *DiagoRouteExtension) GetJSHtml(c *gin.Context) string {
 	}
 	return result
 }
+
 func (e *DiagoRouteExtension) GetPanelHtml(c *gin.Context) string {
-	if router.IsRelease() {
-		return ""
-	}
 	result, err := e.PanelGenerator.GenerateHTML("diagoRoutePanel", e.TemplateProvider, e.data)
 
 	if err != nil {
@@ -132,9 +124,6 @@ func (e *DiagoRouteExtension) GetPanelHtml(c *gin.Context) string {
 }
 
 func (e *DiagoRouteExtension) BeforeNext(c *gin.Context) {
-	if router.IsRelease() {
-		return
-	}
 	e.currentRoute = c.FullPath()
 	var routes []DiagoRoute
 	for _, route := range e.router.GetRoutes() {
@@ -152,9 +141,6 @@ func (e *DiagoRouteExtension) BeforeNext(c *gin.Context) {
 	}
 }
 func (e *DiagoRouteExtension) AfterNext(c *gin.Context) {
-	if router.IsRelease() {
-		return
-	}
 	e.currentRoute = c.FullPath()
 	var routes []DiagoRoute
 	for _, route := range e.router.GetRoutes() {
