@@ -4,6 +4,7 @@
 /.idea
 /vendor
 /coverage.txt
+/coverage.*
 # Binaries for programs and plugins
 *.exe
 *.exe~
