@@ -9,9 +9,9 @@ import (
 
 func TestGenerateUrlByName(t *testing.T) {
 	r := router.NewRouter()
-	r.AddRouteObject(router.NewRoute("index", "/", func(c *gin.Context) {}, router.Get, nil))
-	r.AddRouteObject(router.NewRoute("home", "/home", func(c *gin.Context) {}, router.Get, nil))
-	r.AddRouteObject(router.NewRoute("user", "/user/:id", func(c *gin.Context) {}, router.Get, nil))
+	r.AddRouteObject(router.NewRoute("index", "/", func(c *gin.Context) {}, router.Get))
+	r.AddRouteObject(router.NewRoute("home", "/home", func(c *gin.Context) {}, router.Get))
+	r.AddRouteObject(router.NewRoute("user", "/user/:id", func(c *gin.Context) {}, router.Get))
 
 	tests := []struct {
 		name       string

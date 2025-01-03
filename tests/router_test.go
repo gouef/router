@@ -103,35 +103,6 @@ func TestRouterRoutesKeys(t *testing.T) {
 	}
 }
 
-func TestRoute_AddChild(t *testing.T) {
-	// Vytvoření root route
-	root := router2.NewRoute("root", "/", nil, router2.Get, make(map[string]*router2.Route))
-
-	// Přidání dětí
-	root.AddChild(
-		"child1",
-		"/child1",
-		nil,
-		router2.Get,
-	).AddChild(
-		"child2",
-		"/child2",
-		nil,
-		router2.Post,
-	)
-
-	// Ověření, že root má 2 děti
-	assert.Len(t, root.GetChildren(), 2, "Root should have 2 children")
-
-	// Ověření existence klíčů pro děti
-	assert.Contains(t, root.GetChildren(), "/child1", "Expected '/child1' in children")
-	assert.Contains(t, root.GetChildren(), "/child2", "Expected '/child2' in children")
-
-	// Ověření správné instance dítěte
-	assert.Equal(t, "root:child1", root.GetChildren()["/child1"].GetName(), "Expected the same child1 instance")
-	assert.Equal(t, "root:child2", root.GetChildren()["/child2"].GetName(), "Expected the same child2 instance")
-}
-
 func TestRouterRun(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 

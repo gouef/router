@@ -199,3 +199,132 @@ func TestAddRoute(t *testing.T) {
 	})
 
 }
+
+func TestAddRouteError(t *testing.T) {
+	t.Run("checkParamType", func(t *testing.T) {
+
+		r := router.NewRouter()
+		r.EnableTest()
+		handler := func(c *gin.Context, param string) {}
+		err := r.AddRoute("error", "/error", handler, router.Get)
+		req := httptest.NewRequest(http.MethodGet, "/error", nil)
+		w := httptest.NewRecorder()
+
+		r.GetNativeRouter().ServeHTTP(w, req)
+
+		assert.NotNil(t, err)
+		assert.Equal(t, `Handler parameter must be a pointer to a struct, got string`, err.Error())
+	})
+
+	t.Run("first param must be a function", func(t *testing.T) {
+
+		r := router.NewRouter()
+		r.EnableTest()
+		//handler := func(c *gin.Context, param string) {}
+		err := r.AddRoute("error", "/error", "string", router.Get)
+		req := httptest.NewRequest(http.MethodGet, "/error", nil)
+		w := httptest.NewRecorder()
+
+		r.GetNativeRouter().ServeHTTP(w, req)
+
+		assert.NotNil(t, err)
+		assert.Equal(t, `handler must be a function`, err.Error())
+	})
+
+	t.Run("function has more parameters", func(t *testing.T) {
+
+		r := router.NewRouter()
+		r.EnableTest()
+		handler := func(c *gin.Context, param string, param2 string) {}
+		err := r.AddRoute("error", "/error", handler, router.Get)
+		req := httptest.NewRequest(http.MethodGet, "/error", nil)
+		w := httptest.NewRecorder()
+
+		r.GetNativeRouter().ServeHTTP(w, req)
+
+		assert.NotNil(t, err)
+		assert.Equal(t, `handler must have one or two parameters`, err.Error())
+	})
+
+	t.Run("Error createNativeRoute", func(t *testing.T) {
+
+		r := router.NewRouter()
+		r.EnableTest()
+
+		handler := func(c *gin.Context, param string, param2 string) {}
+
+		route2 := router.NewRoute("error2", "/error2", handler, router.Get)
+		rl := router.CreateRouteList("")
+
+		rl.AddRoute(route2)
+
+		err := r.AddRouteList(rl)
+
+		req := httptest.NewRequest(http.MethodGet, "/v1/error2", nil)
+		w := httptest.NewRecorder()
+
+		r.GetNativeRouter().ServeHTTP(w, req)
+
+		assert.NotNil(t, err)
+		if err != nil {
+			assert.Equal(t, `handler must have one or two parameters`, err.Error())
+		}
+	})
+
+	t.Run("Error createNativeRoute Children", func(t *testing.T) {
+
+		r := router.NewRouter()
+		r.EnableTest()
+
+		type TestParam struct {
+			ID int `uri:"id"`
+		}
+
+		mHandler := func(c *gin.Context, param *TestParam) {}
+		handler := func(c *gin.Context, param string, param2 string) {}
+
+		route := router.NewRoute("error", "/error", mHandler, router.Get)
+		route2 := router.NewRoute("error2", "/error2", handler, router.Get)
+		rl := router.CreateRouteList("")
+		rlV1 := router.CreateRouteList("/v1")
+		rlV1E := router.CreateRouteList("/errors")
+
+		rlV1.AddRoute(route)
+		rlV1E.AddRoute(route2)
+		rlV1.AddChild(rlV1E)
+		rl.AddChild(rlV1)
+
+		err := r.AddRouteList(rl)
+
+		req := httptest.NewRequest(http.MethodGet, "/v1/error2", nil)
+		w := httptest.NewRecorder()
+
+		r.GetNativeRouter().ServeHTTP(w, req)
+
+		assert.NotNil(t, err)
+		if err != nil {
+			assert.Equal(t, `handler must have one or two parameters`, err.Error())
+		}
+	})
+
+	t.Run("bind parameters error", func(t *testing.T) {
+
+		r := router.NewRouter()
+		r.EnableTest()
+		type TestParam struct {
+			ID int `uri:"id" binding:"required"`
+		}
+		handler := func(c *gin.Context, param *TestParam) {
+			c.JSON(http.StatusOK, gin.H{"id": param.ID})
+		}
+		err := r.AddRoute("error", "/error", handler, router.Get)
+		req := httptest.NewRequest(http.MethodGet, "/error", nil)
+		w := httptest.NewRecorder()
+
+		r.GetNativeRouter().ServeHTTP(w, req)
+
+		assert.Equal(t, 400, w.Code)
+		assert.JSONEq(t, "{\"error\": \"Key: 'TestParam.ID' Error:Field validation for 'ID' failed on the 'required' tag\"}", w.Body.String())
+		assert.Nil(t, err)
+	})
+}

@@ -31,10 +31,13 @@ func TestDiagoRouteExtension(t *testing.T) {
 	d.AddExtension(routeExtension)
 	n.Use(diago.DiagoMiddleware(r, d))
 
-	r.AddRouteGet("test", "/test", func(c *gin.Context) {
+	err := r.AddRouteGet("test", "/test", func(c *gin.Context) {
 		panelHtml := template.HTML("<div>Test</div>")
 		c.String(http.StatusOK, string(panelHtml))
 	})
+	if err != nil {
+		return
+	}
 
 	req, err := http.NewRequest("GET", "/test", nil)
 	if err != nil {

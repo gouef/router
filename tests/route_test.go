@@ -8,13 +8,12 @@ import (
 )
 
 func TestGetters(t *testing.T) {
-	children := map[string]*router.Route{}
 	called := false
 	handler := func(c *gin.Context) {
 		called = true
 	}
 	pattern := "/test"
-	route := router.NewRoute("test", pattern, handler, router.Get, children)
+	route := router.NewRoute("test", pattern, handler, router.Get)
 
 	handlerFromRoute, ok := route.GetHandler().(func(*gin.Context))
 	assert.True(t, ok, "Handler is not of type func(*gin.Context)")
