@@ -119,7 +119,7 @@ func (r *Router) ErrorHandlerMiddleware() gin.HandlerFunc {
 //
 //	lr := NewRouteList()
 //	v1 := CreateRouteList("/v1")
-//	lr.AddChild(v1)
+//	lr.addChild(v1)
 //
 //	lr.Add("/:locale/products/:id", productDetailHandler, Get)
 //	v1.Add("/:locale/products/:id", productDetailHandler, Get)
