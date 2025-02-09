@@ -38,6 +38,7 @@ type routeGroupStruct struct {
 // NewRouter create new Router
 func NewRouter() *Router {
 	router := gin.New()
+	router.Use(GouefMiddleware())
 	m, _ := mode.NewBasicMode()
 	return &Router{
 		Router:        router,
