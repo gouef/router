@@ -13,6 +13,15 @@ Router for go (extending gin)
 ![GitHub Release](https://img.shields.io/github/v/release/gouef/router?label=RC&include_prereleases&filter=*rc*&logoSize=diago)
 ![GitHub Release](https://img.shields.io/github/v/release/gouef/router?label=Beta&include_prereleases&filter=*beta*&logoSize=diago)
 
+## Installation
+
+To install the `router` package, use the following Go command:
+
+```bash
+go get -u github.com/gouef/router
+```
+
+
 ## Contributors
 
 <div>
