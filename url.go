@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// GenerateUrlByPattern generate url by pattern
+// GenerateUrlByPattern generate url by Pattern
 func GenerateUrlByPattern(pattern string, params map[string]interface{}) (string, error) {
 	var urlBuilder strings.Builder
 	isFirst := true

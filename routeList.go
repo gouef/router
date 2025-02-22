@@ -6,7 +6,7 @@ type RouteList struct {
 	children []*RouteList
 }
 
-// NewRouteList create RouteList with empty pattern
+// NewRouteList create RouteList with empty Pattern
 func NewRouteList() *RouteList {
 	return CreateRouteList("")
 }

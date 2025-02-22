@@ -1,38 +1,47 @@
 package router
 
+import "github.com/gin-gonic/gin"
+
+type HandlerFunc func(response *Response, request *Request)
+type HandlerParamFunc[T any] func(response *Response, request *Request, p *T)
+
+type HandlerContext func(c *gin.Context)
+
+type HandlerContextParam[T any] func(c *gin.Context, p *T)
+
 type Route struct {
-	name    string
-	pattern string
-	handler interface{}
-	method  Method
+	Name    string
+	Pattern string
+	Handler interface{}
+	Method  Method
 }
 
 // NewRoute create Route
 func NewRoute(name string, pattern string, handler interface{}, method Method) *Route {
 	return &Route{
-		name:    name,
-		pattern: pattern,
-		handler: handler,
-		method:  method,
+		Name:    name,
+		Pattern: pattern,
+		Handler: handler,
+		Method:  method,
 	}
 }
 
-// GetName get route name
+// GetName get route Name
 func (r *Route) GetName() string {
-	return r.name
+	return r.Name
 }
 
-// GetMethod get route method
+// GetMethod get route Method
 func (r *Route) GetMethod() Method {
-	return r.method
+	return r.Method
 }
 
-// GetPattern get route pattern
+// GetPattern get route Pattern
 func (r *Route) GetPattern() string {
-	return r.pattern
+	return r.Pattern
 }
 
-// GetHandler get route handler
+// GetHandler get route Handler
 func (r *Route) GetHandler() interface{} {
-	return r.handler
+	return r.Handler
 }

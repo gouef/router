@@ -48,14 +48,14 @@ func NewRouter() *Router {
 			status := c.Writer.Status()
 			c.JSON(status, gin.H{
 				"error":       "An error occurred",
-				"description": "No specific handler defined for this status",
+				"description": "No specific Handler defined for this status",
 			})
 		},
 		Mode: m,
 	}
 }
 
-// SetDefaultErrorHandler set default error handler
+// SetDefaultErrorHandler set default error Handler
 // Example:
 //
 //	router.SetDefaultErrorHandler(func(c *gin.Context) {
@@ -76,14 +76,14 @@ func (r *Router) GetRoutes() map[string]*Route {
 	return r.Routes
 }
 
-// SetErrorHandler set Error handler for status code
+// SetErrorHandler set Error Handler for status code
 // Example:
 //
 //	router.SetErrorHandler(400, func(c *gin.Context) {
 //		status := c.Writer.Status()
 //		c.JSON(status, gin.H{
 //			"error":       "An error occurred",
-//			"description": "No specific handler defined for this status",
+//			"description": "No specific Handler defined for this status",
 //		})
 //	})
 func (r *Router) SetErrorHandler(status int, handler ErrorHandlerFunc) *Router {
@@ -139,7 +139,7 @@ func (r *Router) createNativeGroup(rgs *routeGroupStruct) error {
 
 	for _, route := range rgs.routes {
 		_, err := createNativeRoute(*group, route)
-		r.Routes[route.name] = route
+		r.Routes[route.Name] = route
 		if err != nil {
 			return err
 		}
@@ -159,7 +159,7 @@ func (r *Router) createNativeGroupChildren(group *gin.RouterGroup, children []*r
 				return err
 			}
 
-			r.Routes[route.name] = route
+			r.Routes[route.Name] = route
 		}
 		if len(child.children) > 0 {
 			err2 := r.createNativeGroupChildren(childGroup, child.children)
@@ -193,24 +193,60 @@ func (r *Router) createGroupStruct(l *RouteList) *routeGroupStruct {
 
 // createHandlerFunc internal, add route to group, and return gin.IRoutes
 func createNativeRoute(g gin.RouterGroup, route *Route) (gin.IRoutes, error) {
-	handler, err := createHandlerFunc(route.handler)
+	handler, err := createHandlerFunc(route.Handler)
 	if err != nil {
 		return nil, err
 	}
-	return g.Handle(route.method.String(), route.pattern, handler), nil
+	return g.Handle(route.Method.String(), route.Pattern, handler), nil
 }
 
 // createHandlerFunc internal, create gin.HandlerFunc
 func createHandlerFunc(handler interface{}) (gin.HandlerFunc, error) {
 	handlerType := reflect.TypeOf(handler)
 
+	switch handlerType {
+	case reflect.TypeOf((*HandlerContext)(nil)).Elem():
+		return func(c *gin.Context) {
+			reflect.ValueOf(handler).Call([]reflect.Value{
+				reflect.ValueOf(c),
+			})
+			return
+		}, nil
+	/*case reflect.TypeOf((*HandlerContextParam)(nil)).Elem():
+	return func(c *gin.Context) {
+		paramType := handlerType.In(1)
+		paramElemType := paramType.Elem()
+		paramValue := reflect.New(paramElemType).Interface()
+
+		err := c.ShouldBindUri(paramValue)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+
+		// Call Handler with binded struct
+		reflect.ValueOf(handler).Call([]reflect.Value{
+			reflect.ValueOf(c),
+			reflect.ValueOf(paramValue),
+		})
+		return
+	}, nil*/
+	case reflect.TypeOf((*HandlerFunc)(nil)).Elem():
+		return func(c *gin.Context) {
+			reflect.ValueOf(handler).Call([]reflect.Value{
+				reflect.ValueOf(c),
+			})
+			return
+		}, nil
+	}
+
 	if handlerType.Kind() != reflect.Func {
-		return nil, errors.New("handler must be a function")
+		return nil, errors.New("Handler must be a function")
 	}
 
 	numIn := handlerType.NumIn()
 	if numIn < 1 || numIn > 2 {
-		return nil, errors.New("handler must have one or two parameters")
+		return nil, errors.New("Handler must have one or two parameters")
 	}
 
 	if numIn == 2 {
@@ -237,7 +273,7 @@ func createHandlerFunc(handler interface{}) (gin.HandlerFunc, error) {
 				return
 			}
 
-			// Call handler with binded struct
+			// Call Handler with binded struct
 			reflect.ValueOf(handler).Call([]reflect.Value{
 				reflect.ValueOf(c),
 				reflect.ValueOf(paramValue),
@@ -247,10 +283,10 @@ func createHandlerFunc(handler interface{}) (gin.HandlerFunc, error) {
 }
 
 // AddRoute add route to router.
-// name: name id for url construct
-// pattern: path to route, example "/users/:id".
-// handler: func(c *gin.Context, p *struct)
-// method: Method
+// Name: Name id for url construct
+// Pattern: path to route, example "/users/:id".
+// Handler: func(c *gin.Context, p *struct)
+// Method: Method
 //
 // Example:
 //
@@ -285,9 +321,9 @@ func (r *Router) AddRouteObject(route *Route) *Router {
 }
 
 // AddMultiMethodsRoute add route with multiple methods to router.
-// name: name id for url construct
-// pattern: path to route, example "/users/:id".
-// handler: func(c *gin.Context, p *struct)
+// Name: Name id for url construct
+// Pattern: path to route, example "/users/:id".
+// Handler: func(c *gin.Context, p *struct)
 // methods: []Method
 //
 // Example:
@@ -309,10 +345,10 @@ func (r *Router) AddMultiMethodsRoute(name string, pattern string, handler inter
 }
 
 // AddRouteMethod add route to router.
-// name: name id for url construct
-// pattern: path to route, example "/users/:id".
-// handler: func(c *gin.Context, p *struct)
-// method: Method
+// Name: Name id for url construct
+// Pattern: path to route, example "/users/:id".
+// Handler: func(c *gin.Context, p *struct)
+// Method: Method
 //
 // Example:
 //
@@ -329,10 +365,10 @@ func (r *Router) AddRouteMethod(name string, pattern string, handler interface{}
 }
 
 // CreateRoute add generic route to router.
-// name: name id for url construct
-// pattern: path to route, example "/users/:id".
-// handler: func(c *gin.Context, p *struct)
-// method: Method
+// Name: Name id for url construct
+// Pattern: path to route, example "/users/:id".
+// Handler: func(c *gin.Context, p *struct)
+// Method: Method
 //
 // Example:
 //
@@ -345,13 +381,14 @@ func (r *Router) AddRouteMethod(name string, pattern string, handler interface{}
 //			})
 //		}, Get)
 func CreateRoute[T any](r *Router, name string, pattern string, handler func(c *gin.Context, p *T), method Method) error {
+	//res := &Response{Context: handler}
 	return r.AddRoute(name, pattern, handler, method)
 }
 
 // AddRouteGet add GET route to router.
-// name: name id for url construct
-// pattern: path to route, example "/users/:id".
-// handler: func(c *gin.Context, p *struct)
+// Name: Name id for url construct
+// Pattern: path to route, example "/users/:id".
+// Handler: func(c *gin.Context, p *struct)
 //
 // Example:
 //
@@ -368,9 +405,9 @@ func (r *Router) AddRouteGet(name string, pattern string, handler interface{}) e
 }
 
 // AddRoutePost add POST route to router.
-// name: name id for url construct
-// pattern: path to route, example "/users/:id".
-// handler: func(c *gin.Context, p *struct)
+// Name: Name id for url construct
+// Pattern: path to route, example "/users/:id".
+// Handler: func(c *gin.Context, p *struct)
 //
 // Example:
 //
@@ -387,9 +424,9 @@ func (r *Router) AddRoutePost(name string, pattern string, handler interface{}) 
 }
 
 // AddRoutePatch add Path route to router.
-// name: name id for url construct
-// pattern: path to route, example "/users/:id".
-// handler: func(c *gin.Context, p *struct)
+// Name: Name id for url construct
+// Pattern: path to route, example "/users/:id".
+// Handler: func(c *gin.Context, p *struct)
 //
 // Example:
 //
@@ -406,9 +443,9 @@ func (r *Router) AddRoutePatch(name string, pattern string, handler interface{})
 }
 
 // AddRouteDelete add Delete route to router.
-// name: name id for url construct
-// pattern: path to route, example "/users/:id".
-// handler: func(c *gin.Context, p *struct)
+// Name: Name id for url construct
+// Pattern: path to route, example "/users/:id".
+// Handler: func(c *gin.Context, p *struct)
 //
 // Example:
 //
@@ -425,9 +462,9 @@ func (r *Router) AddRouteDelete(name string, pattern string, handler interface{}
 }
 
 // AddRoutePut add Put route to router.
-// name: name id for url construct
-// pattern: path to route, example "/users/:id".
-// handler: func(c *gin.Context, p *struct)
+// Name: Name id for url construct
+// Pattern: path to route, example "/users/:id".
+// Handler: func(c *gin.Context, p *struct)
 //
 // Example:
 //
@@ -463,10 +500,10 @@ func (r *Router) GenerateUrlByName(name string, params map[string]interface{}) (
 	route, exists := r.Routes[name]
 
 	if !exists {
-		return "", errors.New(fmt.Sprintf("route with name %s not found", name))
+		return "", errors.New(fmt.Sprintf("route with Name %s not found", name))
 	}
 
-	return r.GenerateUrlByPattern(route.pattern, params)
+	return r.GenerateUrlByPattern(route.Pattern, params)
 }
 
 func (r *Router) GenerateUrlByPattern(pattern string, params map[string]interface{}) (string, error) {
@@ -481,7 +518,7 @@ func (r *Router) GetNativeRouter() *gin.Engine {
 
 // Run attaches the router to a http.Server and starts listening and serving HTTP requests.
 // It is a shortcut for http.ListenAndServe(addr, router)
-// Note: this method will block the calling goroutine indefinitely unless an error happens.
+// Note: this Method will block the calling goroutine indefinitely unless an error happens.
 func (r *Router) Run(addr string) error {
 	router := r.Router
 	if h, ok := r.ErrorHandlers[404]; ok {

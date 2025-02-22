@@ -228,7 +228,7 @@ func TestAddRouteError(t *testing.T) {
 		r.GetNativeRouter().ServeHTTP(w, req)
 
 		assert.NotNil(t, err)
-		assert.Equal(t, `handler must be a function`, err.Error())
+		assert.Equal(t, `Handler must be a function`, err.Error())
 	})
 
 	t.Run("function has more parameters", func(t *testing.T) {
@@ -243,7 +243,7 @@ func TestAddRouteError(t *testing.T) {
 		r.GetNativeRouter().ServeHTTP(w, req)
 
 		assert.NotNil(t, err)
-		assert.Equal(t, `handler must have one or two parameters`, err.Error())
+		assert.Equal(t, `Handler must have one or two parameters`, err.Error())
 	})
 
 	t.Run("Error createNativeRoute", func(t *testing.T) {
@@ -267,7 +267,7 @@ func TestAddRouteError(t *testing.T) {
 
 		assert.NotNil(t, err)
 		if err != nil {
-			assert.Equal(t, `handler must have one or two parameters`, err.Error())
+			assert.Equal(t, `Handler must have one or two parameters`, err.Error())
 		}
 	})
 
@@ -303,7 +303,7 @@ func TestAddRouteError(t *testing.T) {
 
 		assert.NotNil(t, err)
 		if err != nil {
-			assert.Equal(t, `handler must have one or two parameters`, err.Error())
+			assert.Equal(t, `Handler must have one or two parameters`, err.Error())
 		}
 	})
 
