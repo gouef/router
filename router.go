@@ -517,6 +517,17 @@ func (r *Router) SetHtmlRenderer(renderer render.HTMLRender) *Router {
 	return r
 }
 
+func (r *Router) EnablePrefetch() *Router {
+	r.GetNativeRouter().Use(func(c *gin.Context) {
+		c.Writer.Header().Del("Purpose")
+		c.Writer.Header().Set("Purpose", "prefetch")
+		c.Writer.Header().Set("X-DNS-Prefetch-Control", "on")
+		c.Next()
+	})
+
+	return r
+}
+
 // GetNativeRouter return gin router engine
 // Docs continue in gin.Engine
 func (r *Router) GetNativeRouter() *gin.Engine {
