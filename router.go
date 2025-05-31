@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/render"
 	"github.com/gouef/mode"
 	"net/http"
 	"reflect"
@@ -508,6 +509,12 @@ func (r *Router) GenerateUrlByName(name string, params map[string]interface{}) (
 
 func (r *Router) GenerateUrlByPattern(pattern string, params map[string]interface{}) (string, error) {
 	return GenerateUrlByPattern(pattern, params)
+}
+
+// SetHtmlRenderer set html renderer
+func (r *Router) SetHtmlRenderer(renderer render.HTMLRender) *Router {
+	r.GetNativeRouter().HTMLRender = renderer
+	return r
 }
 
 // GetNativeRouter return gin router engine
