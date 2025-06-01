@@ -29,7 +29,7 @@ func TestDiagoRouteExtension(t *testing.T) {
 
 	routeExtension := extensions.NewDiagoRouteExtension(r)
 	d.AddExtension(routeExtension)
-	n.Use(diago.DiagoMiddleware(r, d))
+	n.Use(diago.Middleware(r, d))
 
 	err := r.AddRouteGet("test", "/test", func(c *gin.Context) {
 		panelHtml := template.HTML("<div>Test</div>")
