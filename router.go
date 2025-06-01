@@ -550,6 +550,6 @@ func (r *Router) Run(addr string) error {
 			})
 		})
 	}
-	router.Use(r.ErrorHandlerMiddleware())
+	//router.Use(r.ErrorHandlerMiddleware())
 	return router.Run(addr)
 }
