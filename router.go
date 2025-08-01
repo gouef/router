@@ -28,6 +28,7 @@ type Router struct {
 	ErrorHandlers  map[int]ErrorHandlerFunc
 	DefaultHandler ErrorHandlerFunc
 	Mode           *mode.Mode
+	renderer       render.HTMLRender
 }
 
 type routeGroupStruct struct {
@@ -513,8 +514,14 @@ func (r *Router) GenerateUrlByPattern(pattern string, params map[string]interfac
 
 // SetHtmlRenderer set html renderer
 func (r *Router) SetHtmlRenderer(renderer render.HTMLRender) *Router {
+	r.renderer = renderer
 	r.GetNativeRouter().HTMLRender = renderer
 	return r
+}
+
+// GetHtmlRenderer get html renderer
+func (r *Router) GetHtmlRenderer() render.HTMLRender {
+	return r.renderer
 }
 
 func (r *Router) EnablePrefetch() *Router {
