@@ -1,0 +1,24 @@
+<svg width="180" height="220" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<style>.text{font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Noto Sans, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;font-size: 16px;line-height: 1.5;word-wrap: break-word;}</style>
+<defs><mask id="circle-mask"><circle cx="50%" cy="75" r="60" fill="white" /></mask></defs>
+<g>
+<image href="data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAALAAAACwCAMAAACYaRRsAAAAY1BMVEUDZtYjedvQ4/j////f7Poi
+edvg7PrQ4vgTcNiBs+vQ4/egxvBioOXv9f3v9fxxqeigxfCBsuvA2PXA2fWgxu9xqedhn+WBsuqw
+z/Iyg92RvOxin+WhxvBCjODQ4vcTcNmgxe8ggTbcAAACV0lEQVR4nOzc71raMBSA8bAA1tlKxxTY
+cH/u/yr3gCgyctqc9pzUzff9XOnvqbVNSWogIiIiIiIiIiIiIrJo9ikmmi+mdoktU94Yb6Z2iaW9
+MU7tEgPsHWDvAHsH2DvA3gH2DrB3/xw4+cDxnsEz4ZFjald2gL0D7B1g7wBnVN0KNwPbPt8ZfQFX
+NyW4h+5XFt5VKe6herx3Vuz4HrqvRoPbkt4Yv4wGS8NFp+ajwWW9Bpc/wIABAwYMGDBgwIABAwYM
+GDBgwMbgZv1V42oebqYFzxfyJGiitgrhcUrw8+rVbHF7/OjNdOCX1baZ4vb02SnxYGh6HXC3N1Pc
+vu4keYzjsPXGinmYt58uElLeEMQ/VP164569rre75NH4lty6+b5dprxhK+7AGLw/H8zL317yCB83
+aRPesCsE3p9xl97kOXzapL32dsxQmYL3p202Gu9RfOmtO/ZhCT5P/2003hDafK8leC39SPqaJs5u
+dnotwQ8q7+v5o/NagoXZSumecTfIa3oOP2m8wvxxn9f2KpEQd92TE+Jer/F1+ErcPYa4Evd7re90
+TxrvlTjDaw2+FPeP0Wqt1xz8VpwzpqyVXnvwWZw3aq91Xgfwizj3uahWeT3Az+L8J89a43UBx90i
+/FA8mayq6jZ7YxewZ4ABA37v4MIL7P5Ov+BO8VWkQz+Hr8wtTR0MBQwYMGDAgAED/pDgwqPM8f/A
+SJ76c0maj8jvV9GXpxqDV+oyZo/tMnmh7rHYMW6kGSdls9/CchfbltvxL9MRERERERERERER0f/a
+nwAAAP//8WF53YkDkb4AAAAASUVORK5CYII=" x="15" y="0" width="150" height="150" mask="url(#circle-mask)" />
+<a href="https://github.com/apps/dependabot">
+<text class="text" x="50%" y="170" dominant-baseline="middle" text-anchor="middle" font-size="16" fill="#4493f8">@dependabot[bot]</text>
+</a>
+<text class="text" x="50%" y="195" dominant-baseline="middle" text-anchor="middle" font-size="14" fill="orange">2</text>
+  </g>
+</svg>
