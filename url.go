@@ -7,32 +7,31 @@ import (
 
 // GenerateUrlByPattern generate url by Pattern
 func GenerateUrlByPattern(pattern string, params map[string]interface{}) (string, error) {
-	var urlBuilder strings.Builder
-	isFirst := true
+	if pattern == "" {
+		return "/", nil
+	}
 
 	parts := strings.Split(pattern, "/")
+	var resultParts []string
+
 	for _, part := range parts {
+		if part == "" {
+			continue
+		}
+
 		if strings.HasPrefix(part, ":") {
+			paramName := part[1:]
 
-			paramName := part[1:] // Remove ':'
-			if value, exists := params[paramName]; exists {
-				if !isFirst {
-					urlBuilder.WriteString("/")
-				}
-
-				urlBuilder.WriteString(fmt.Sprintf("%v", value))
-				isFirst = false
-			} else {
+			value, exists := params[paramName]
+			if !exists || fmt.Sprintf("%v", value) == "" {
 				return "", fmt.Errorf("missing value for parameter: %s", paramName)
 			}
+
+			resultParts = append(resultParts, fmt.Sprintf("%v", value))
 		} else {
-			if !isFirst {
-				urlBuilder.WriteString("/")
-			}
-			urlBuilder.WriteString(part)
-			isFirst = false
+			resultParts = append(resultParts, part)
 		}
 	}
 
-	return urlBuilder.String(), nil
+	return "/" + strings.Join(resultParts, "/"), nil
 }
