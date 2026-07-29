@@ -3,11 +3,12 @@ package router
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"reflect"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/render"
 	"github.com/gouef/mode"
-	"net/http"
-	"reflect"
 )
 
 const (
